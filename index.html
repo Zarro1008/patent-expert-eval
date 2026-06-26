@@ -244,7 +244,7 @@
    submitEndpoint: 後台收集端點（Google Apps Script /exec 網址）。
      設定後「送出評分」會 POST JSON。留空則僅能下載檔案。
    ============================================================ */
-const CONFIG = { submitEndpoint: "" };
+const CONFIG = { submitEndpoint: "https://script.google.com/macros/s/AKfycbyhAXSmSdAYHOuudVoSsyj9_DGImJH8T_oGOwcldEP3uzfXkLbBdvAdqMIqwklAILWt/exec" };
 
 const SURVEY_META = { title: "多語專利情報系統輸出 — 人工專家 pilot 評估", version: "1.0", n_items: 13 };
 const ITEMS = (window.ITEMS || []);
