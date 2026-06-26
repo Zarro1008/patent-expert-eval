@@ -113,7 +113,7 @@
       <strong>1. 獨立作業：</strong>兩位專家不得互相討論後再各自填（歧異留待事後仲裁）。<br>
       <strong>2. 盲評：</strong>系統對 Document type / Actionability 的初判<strong>不會顯示</strong>給您（那是待驗證的輸出，非答案）。<br>
       <strong>3. 題序隨機：</strong>每位評分者的題目順序各自隨機化，屬正常。<br>
-      <strong>4. 空來源規則（重要）：</strong>若某筆原文缺失／不足以判斷某維度，該維度請選 <b>N/A</b>，<u>不要</u>給最低分。<br>
+      <strong>4. 空來源規則（重要）：</strong>若某筆未隨 feed 提供原文全文，請先<b>點選該筆的「原文連結」開啟原文</b>閱讀後再判定；若開啟後仍不足以判斷某維度，該維度才選 <b>N/A</b>，<u>不要</u>給最低分。<br>
       <strong>5. 校準回合：</strong>正式作答前，請兩位專家先共同檢視 2–3 筆範例、逐維度對齊評分標準與 N/A 時機，再各自獨立評全部 13 筆。
     </div>
 
@@ -315,7 +315,7 @@ function renderItem(){
   $("#itemPill").textContent=`項目 ${state.itemIdx+1} / ${ITEMS.length}`;
   $("#itemTitle").textContent=`評估項目（編號 ${m.item_id}）`;
   $("#itemMeta").innerHTML=`來源 <b>${esc(m.source||"—")}</b> · feed <b>${esc(m.feed||"—")}</b>` + (m.link?` · <a href="${esc(m.link)}" target="_blank" rel="noopener">原文連結 ↗</a>`:"");
-  setSrc("#srcOriginal","#srcOriginalText", m.original_content, "原文（來源語言）","（原文內容缺失／不足 — 依規則第 4 點，無法判斷的維度請選 N/A）");
+  renderOriginal(m);
   setSrc("#srcTranslation","#srcTranslationText", m.system_translation, "系統繁體中文翻譯");
   setSrc("#srcSummary","#srcSummaryText", m.system_summary, "系統摘要");
   setSrc("#srcTags","#srcTagsText", m.system_tags, "系統實體／關鍵詞（system_tags）");
@@ -329,6 +329,18 @@ function renderItem(){
   const ta=$('textarea[data-field="Notes"]'); ta.value=d.Notes||""; ta.oninput=()=>setField("Notes",ta.value);
   $("#timerVal").textContent=Math.round(d._acc||0);
   startTimer();
+}
+function renderOriginal(m){
+  const el=$("#srcOriginal"), t=$("#srcOriginalText");
+  el.querySelector(".role").textContent="原文（來源語言）";
+  const oc=(m.original_content==null?"":String(m.original_content)).trim();
+  if(oc){ t.textContent=oc; el.classList.remove("empty"); return; }
+  el.classList.add("empty");
+  if(m.link){
+    t.innerHTML='本筆未隨 feed 提供全文內容。請<a href="'+esc(m.link)+'" target="_blank" rel="noopener"><b>點選原文連結開啟原文 ↗</b></a>，閱讀原文後再進行各維度判定。<br>（若開啟連結後仍不足以判斷某維度，該維度再選 N/A。）';
+  } else {
+    t.textContent="（原文內容缺失，且無原文連結 — 無法判斷的維度請選 N/A）";
+  }
 }
 function setSrc(box,txt,content,role,emptyMsg){
   const el=$(box), t=$(txt); const c=(content==null?"":String(content)).trim();
