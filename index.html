@@ -542,7 +542,7 @@
         <div class="resume-msg">偵測到您上次<strong>已填寫但尚未送出</strong>的評分（<span id="resumeInfo"></span>）。</div>
         <button class="primary" id="resumeBtn">繼續上次填答並送出</button>
       </div>
-      <span class="pill">說明 · 第 1 步</span><span class="draft-tag">pilot N=13</span>
+      <span class="pill">說明 · 第 1 步</span><span class="draft-tag">pilot · 8 題</span>
       <h2>專家評分 — 系統自動產出之品質評核</h2>
       <p class="lead">感謝您參與。本評估針對多語專利情報自動化系統（GPT-4.1 mini）對每筆情報的<strong>自動產出</strong>
         （翻譯、摘要、實體標註、文件類型、行動性），由專家獨立評核其品質，作為輸出品質的人類基準。 </p>
@@ -706,7 +706,7 @@
        ============================================================ */
     const CONFIG = { submitEndpoint: "https://script.google.com/macros/s/AKfycbyhAXSmSdAYHOuudVoSsyj9_DGImJH8T_oGOwcldEP3uzfXkLbBdvAdqMIqwklAILWt/exec" };
 
-    const SURVEY_META = { title: "多語專利情報系統輸出 — 人工專家 pilot 評估", version: "1.0", n_items: 13 };
+    const SURVEY_META = { title: "多語專利情報系統輸出 — 人工專家 pilot 評估", version: "1.0", n_items: 8 };
     const ITEMS = (window.ITEMS || []);
     const SEED = { A: 101, B: 202 };
     const EXPERT_LANG = { A: "英文", B: "英文／韓文" };  // 評分者依負責的翻譯語言區分
