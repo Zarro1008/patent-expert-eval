@@ -106,7 +106,7 @@
 
     <h3>您要評核什麼</h3>
     <p>每筆提供：<strong>原文</strong>、系統<strong>翻譯</strong>、系統<strong>摘要</strong>、系統<strong>實體／關鍵詞</strong>。
-      請<strong>對照原文</strong>評核系統產出，而非自己重寫。共 <strong id="introCount">13</strong> 筆。</p>
+      請<strong>對照原文</strong>評核系統產出，而非自己重寫。題數依您所選的翻譯語言而定（共 <strong id="introCount">4–8</strong> 筆）：選「英文」者僅出現英文來源題；選「英文／韓文」者另含韓文來源題。</p>
 
     <h3>評分規則（務必遵守）</h3>
     <div class="note-box">
@@ -272,7 +272,15 @@ function seededOrder(seed,n){
   for(let i=n-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); [idx[i],idx[j]]=[idx[j],idx[i]]; }
   return idx;
 }
-function ensureOrder(){ if(!state.order||state.order.length!==ITEMS.length) state.order=seededOrder(SEED[state.expert]||1, ITEMS.length); }
+/* 依評分者語言能力篩題：A=英文 → 僅英文來源題；B=英文／韓文 → 全部 */
+function canSee(m){ return state.expert==="B" ? true : (m.lang!=="ko"); }
+function visibleIdx(){ return ITEMS.map((m,i)=>i).filter(i=>canSee(ITEMS[i])); }
+function ensureOrder(){
+  const vis=visibleIdx();
+  const valid = state.order && state.order.length===vis.length && state.order.every(i=>vis.includes(i));
+  if(!valid){ const perm=seededOrder(SEED[state.expert]||1, vis.length); state.order=perm.map(k=>vis[k]); state.itemIdx=Math.min(state.itemIdx, Math.max(0,vis.length-1)); }
+}
+function visCount(){ return state.order ? state.order.length : 0; }
 
 /* ---- 計時 ---- */
 let timerHandle=null, enterTs=0;
@@ -313,7 +321,7 @@ function paintSeg(el){
 /* ---- 繪製單筆 ---- */
 function renderItem(){
   const m=curMeta(), d=curItem();
-  $("#itemPill").textContent=`項目 ${state.itemIdx+1} / ${ITEMS.length}`;
+  $("#itemPill").textContent=`項目 ${state.itemIdx+1} / ${visCount()}`;
   $("#itemTitle").textContent=`評估項目（編號 ${m.item_id}）`;
   $("#itemMeta").innerHTML=`來源 <b>${esc(m.source||"—")}</b> · feed <b>${esc(m.feed||"—")}</b>` + (m.link?` · <a href="${esc(m.link)}" target="_blank" rel="noopener">原文連結 ↗</a>`:"");
   renderOriginal(m);
@@ -373,7 +381,7 @@ function go(dir){
   if(dir>0 && !validate()) return;
   if(sc==="item") stopTimer();
   if(sc==="item"){
-    if(dir>0){ if(state.itemIdx<ITEMS.length-1){ state.itemIdx++; save(); return showItem(); } else state.screenIdx++; }
+    if(dir>0){ if(state.itemIdx<visCount()-1){ state.itemIdx++; save(); return showItem(); } else state.screenIdx++; }
     else { if(state.itemIdx>0){ state.itemIdx--; save(); return showItem(); } else state.screenIdx--; }
   } else { state.screenIdx+=dir; if(SCREENS[state.screenIdx]==="item"){ save(); return showItem(); } }
   state.screenIdx=Math.max(0,Math.min(SCREENS.length-1,state.screenIdx));
@@ -386,15 +394,15 @@ function render(){
   const sc=SCREENS[state.screenIdx];
   $$(".screen").forEach(s=>s.classList.toggle("hidden", s.dataset.screen!==sc));
   $("#whoTag").textContent = state.expert ? (EXPERT_LANG[state.expert]+"（評分者 "+state.expert+"）") : "";
-  $("#introCount").textContent=ITEMS.length;
+  $("#introCount").textContent = state.order ? visCount() : "4–8";
   if(sc==="item") renderItem();
   if(sc==="done") renderReview();
   if(sc==="intro") $("#consent").checked=!!state.consent;
   if(sc==="expert"){ paintExpert(); $("#raterName").value=state.rater.name||""; $("#raterRegion").value=state.rater.region||""; }
   $("#backBtn").style.visibility=(state.screenIdx===0)?"hidden":"visible";
   $("#nextBtn").style.visibility=(sc==="done")?"hidden":"visible";
-  $("#nextBtn").textContent=(sc==="item"&&state.itemIdx===ITEMS.length-1)?"完成 →":"繼續 →";
-  let total=SCREENS.length-1+ITEMS.length-1;
+  $("#nextBtn").textContent=(sc==="item"&&state.itemIdx===visCount()-1)?"完成 →":"繼續 →";
+  let total=SCREENS.length-1+Math.max(0,visCount()-1);
   let done=state.screenIdx+((sc==="item"||sc==="done")?state.itemIdx:0); if(sc==="done") done=total;
   const pct=total?Math.round(100*done/total):0;
   $("#pbar").style.width=pct+"%"; $("#ppct").textContent=pct+"%";
