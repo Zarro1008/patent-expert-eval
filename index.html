@@ -1,542 +1,997 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
+
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>專家評估 — 多語專利情報自動化系統輸出品質（N=13 pilot）</title>
-<style>
-  :root{
-    --bg:#f6f7f9; --card:#fff; --ink:#1c2330; --muted:#5b6472;
-    --line:#e2e6ec; --accent:#2f5bd0; --accent-weak:#eef3ff;
-    --ok:#1f8a4c; --warn:#b25c00; --bad:#c0392b; --na:#6b7280;
-    --radius:12px; --maxw:920px;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);
-    font:15px/1.7 -apple-system,"Segoe UI",Roboto,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif}
-  header.bar{position:sticky;top:0;z-index:30;background:var(--card);
-    border-bottom:1px solid var(--line);padding:10px 18px;display:flex;align-items:center;gap:14px}
-  header.bar h1{font-size:14px;margin:0;font-weight:650}
-  header.bar .who{font-size:12px;color:var(--accent);font-weight:700;white-space:nowrap}
-  .progress-wrap{flex:1;height:8px;background:var(--line);border-radius:6px;overflow:hidden;min-width:60px}
-  .progress-bar{height:100%;width:0;background:var(--accent);transition:width .25s}
-  .progress-pct{font-size:12px;color:var(--muted);min-width:38px;text-align:right}
-  main{max-width:var(--maxw);margin:24px auto 130px;padding:0 18px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
-    padding:22px 26px;margin:0 0 22px;box-shadow:0 1px 2px rgba(20,30,50,.04)}
-  h2{font-size:20px;margin:.1em 0 .5em}
-  h3{font-size:15px;margin:1.4em 0 .4em;color:var(--accent);border-top:1px solid var(--line);padding-top:1em}
-  h3:first-of-type{border-top:0;padding-top:0}
-  p.lead{color:var(--muted);margin:.2em 0 1em}
-  .pill{display:inline-block;font-size:12px;font-weight:600;color:var(--accent);
-    background:var(--accent-weak);border-radius:20px;padding:3px 11px;margin-bottom:10px}
-  .draft-tag{display:inline-block;font-size:11px;font-weight:700;color:var(--warn);
-    background:#fff3e6;border:1px solid #ffd9a8;border-radius:20px;padding:2px 10px;margin-left:8px}
-  label.q{display:block;font-weight:600;margin:14px 0 6px}
-  label.q .req{color:var(--bad)}
-  .anchor{font-weight:400;color:var(--muted);font-size:12.5px;display:block;margin-top:3px;
-    background:#fafbfc;border-left:3px solid var(--line);padding:6px 10px;border-radius:0 6px 6px 0}
-  .hint{font-weight:400;color:var(--muted);font-size:13px;display:block;margin-top:2px}
-  input[type=text],input[type=number],select,textarea{
-    width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;font:inherit;background:#fff;color:inherit}
-  textarea{min-height:60px;resize:vertical}
-  .scale{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
-  .scale label{flex:1;min-width:62px;border:1px solid var(--line);border-radius:8px;
-    padding:8px 6px;text-align:center;cursor:pointer;font-size:13px;background:#fff;transition:.12s}
-  .scale label:hover{border-color:var(--accent)}
-  .scale label.sel{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
-  .scale label.na.sel{background:var(--na);border-color:var(--na)}
-  .scale .num{display:block;font-size:16px;font-weight:700}
-  .seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;margin-top:6px;flex-wrap:wrap}
-  .seg label{padding:7px 14px;cursor:pointer;font-size:13px;background:#fff;border-left:1px solid var(--line)}
-  .seg label:first-child{border-left:0}
-  .seg label.sel-good{background:var(--ok);color:#fff;font-weight:600}
-  .seg label.sel-bad{background:var(--bad);color:#fff;font-weight:600}
-  .seg label.sel-plain{background:var(--accent);color:#fff;font-weight:600}
-  .seg label.sel-na{background:var(--na);color:#fff;font-weight:600}
-  .srcbox{background:#fbfcfe;border:1px dashed var(--line);border-radius:8px;
-    padding:12px 14px;margin:10px 0;font-size:14px;white-space:pre-wrap;line-height:1.85;
-    max-height:320px;overflow:auto}
-  .srcbox .role{font-size:11px;letter-spacing:.04em;color:var(--muted);font-weight:700;display:block;margin-bottom:4px}
-  .srcbox.empty{color:var(--warn);font-style:italic}
-  .meta-row{font-size:12px;color:var(--muted);margin:2px 0 12px}
-  .meta-row b{color:var(--ink)}
-  .entity-grid{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px;align-items:flex-end}
-  .entity-grid .fld{flex:1;min-width:90px}
-  .entity-grid .fld label{font-size:12px;font-weight:700;display:block;margin-bottom:3px}
-  .na-toggle{font-size:13px;color:var(--muted);margin-top:8px;display:inline-flex;align-items:center;gap:6px}
-  .timer{font-size:12px;color:var(--muted);background:#f4f6fa;border-radius:6px;padding:4px 10px;display:inline-block;margin-top:8px}
-  .timer b{color:var(--accent)}
-  button{font:inherit;font-weight:600;border:0;border-radius:9px;padding:11px 22px;cursor:pointer}
-  button.primary{background:var(--accent);color:#fff}
-  button.ghost{background:#fff;border:1px solid var(--line);color:var(--ink)}
-  button:disabled{opacity:.4;cursor:not-allowed}
-  .footer-actions{position:fixed;bottom:0;left:0;right:0;background:var(--card);
-    border-top:1px solid var(--line);padding:12px 18px;display:flex;justify-content:space-between;gap:12px;z-index:30}
-  .footer-actions .save-state{font-size:12px;color:var(--muted);align-self:center}
-  .hidden{display:none}
-  .err{color:var(--bad);font-size:13px;margin-top:8px;font-weight:600}
-  .ok-msg{color:var(--ok);font-size:14px;margin-top:8px;font-weight:600}
-  .expert-pick{display:flex;gap:14px;margin:10px 0}
-  .expert-pick label{flex:1;display:flex;align-items:center;gap:10px;border:2px solid var(--line);border-radius:10px;padding:16px;cursor:pointer;font-weight:700;-webkit-tap-highlight-color:rgba(47,91,208,.15)}
-  .expert-pick label input{width:20px;height:20px;flex:0 0 auto;margin:0;accent-color:var(--accent)}
-  .expert-pick label .pick-text{display:flex;flex-direction:column;gap:2px;text-align:left}
-  .expert-pick label .pick-sub{font-weight:400;font-size:12px;color:var(--muted)}
-  .expert-pick label.sel{border-color:var(--accent);background:var(--accent-weak);color:var(--accent)}
-  .note-box{background:#fff8ec;border:1px solid #ffe2b0;border-radius:8px;padding:12px 14px;font-size:13.5px;color:#6b4e1e}
-  .resume-box{background:var(--accent-weak);border:1px solid #c5d4f5;border-radius:10px;padding:14px 16px;margin-bottom:16px;display:flex;flex-direction:column;gap:10px}
-  .resume-box .resume-msg{font-size:14px;color:var(--ink)}
-  .resume-box button{align-self:flex-start}
-  table.review{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:10px;display:block;overflow-x:auto}
-  table.review th,table.review td{border:1px solid var(--line);padding:5px 7px;text-align:center;white-space:nowrap}
-  table.review th{background:#f4f6fa}
-  code{background:#f0f2f6;padding:1px 5px;border-radius:4px;font-size:12px}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>專家評估 — 多語專利情報自動化系統輸出品質</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --card: #fff;
+      --ink: #1c2330;
+      --muted: #5b6472;
+      --line: #e2e6ec;
+      --accent: #2f5bd0;
+      --accent-weak: #eef3ff;
+      --ok: #1f8a4c;
+      --warn: #b25c00;
+      --bad: #c0392b;
+      --na: #6b7280;
+      --radius: 12px;
+      --maxw: 920px;
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 15px/1.7 -apple-system, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif
+    }
+
+    header.bar {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      background: var(--card);
+      border-bottom: 1px solid var(--line);
+      padding: 10px 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px
+    }
+
+    header.bar h1 {
+      font-size: 14px;
+      margin: 0;
+      font-weight: 650
+    }
+
+    header.bar .who {
+      font-size: 12px;
+      color: var(--accent);
+      font-weight: 700;
+      white-space: nowrap
+    }
+
+    .progress-wrap {
+      flex: 1;
+      height: 8px;
+      background: var(--line);
+      border-radius: 6px;
+      overflow: hidden;
+      min-width: 60px
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0;
+      background: var(--accent);
+      transition: width .25s
+    }
+
+    .progress-pct {
+      font-size: 12px;
+      color: var(--muted);
+      min-width: 38px;
+      text-align: right
+    }
+
+    main {
+      max-width: var(--maxw);
+      margin: 24px auto 130px;
+      padding: 0 18px
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 22px 26px;
+      margin: 0 0 22px;
+      box-shadow: 0 1px 2px rgba(20, 30, 50, .04)
+    }
+
+    h2 {
+      font-size: 20px;
+      margin: .1em 0 .5em
+    }
+
+    h3 {
+      font-size: 15px;
+      margin: 1.4em 0 .4em;
+      color: var(--accent);
+      border-top: 1px solid var(--line);
+      padding-top: 1em
+    }
+
+    h3:first-of-type {
+      border-top: 0;
+      padding-top: 0
+    }
+
+    p.lead {
+      color: var(--muted);
+      margin: .2em 0 1em
+    }
+
+    .pill {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent);
+      background: var(--accent-weak);
+      border-radius: 20px;
+      padding: 3px 11px;
+      margin-bottom: 10px
+    }
+
+    .draft-tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--warn);
+      background: #fff3e6;
+      border: 1px solid #ffd9a8;
+      border-radius: 20px;
+      padding: 2px 10px;
+      margin-left: 8px
+    }
+
+    label.q {
+      display: block;
+      font-weight: 600;
+      margin: 14px 0 6px
+    }
+
+    label.q .req {
+      color: var(--bad)
+    }
+
+    .anchor {
+      font-weight: 400;
+      color: var(--muted);
+      font-size: 12.5px;
+      display: block;
+      margin-top: 3px;
+      background: #fafbfc;
+      border-left: 3px solid var(--line);
+      padding: 6px 10px;
+      border-radius: 0 6px 6px 0
+    }
+
+    .hint {
+      font-weight: 400;
+      color: var(--muted);
+      font-size: 13px;
+      display: block;
+      margin-top: 2px
+    }
+
+    input[type=text],
+    input[type=number],
+    select,
+    textarea {
+      width: 100%;
+      padding: 9px 11px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font: inherit;
+      background: #fff;
+      color: inherit
+    }
+
+    textarea {
+      min-height: 60px;
+      resize: vertical
+    }
+
+    .scale {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 6px
+    }
+
+    .scale label {
+      flex: 1;
+      min-width: 62px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 6px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 13px;
+      background: #fff;
+      transition: .12s
+    }
+
+    .scale label:hover {
+      border-color: var(--accent)
+    }
+
+    .scale label.sel {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+      font-weight: 600
+    }
+
+    .scale label.na.sel {
+      background: var(--na);
+      border-color: var(--na)
+    }
+
+    .scale .num {
+      display: block;
+      font-size: 16px;
+      font-weight: 700
+    }
+
+    .seg {
+      display: inline-flex;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      overflow: hidden;
+      margin-top: 6px;
+      flex-wrap: wrap
+    }
+
+    .seg label {
+      padding: 7px 14px;
+      cursor: pointer;
+      font-size: 13px;
+      background: #fff;
+      border-left: 1px solid var(--line)
+    }
+
+    .seg label:first-child {
+      border-left: 0
+    }
+
+    .seg label.sel-good {
+      background: var(--ok);
+      color: #fff;
+      font-weight: 600
+    }
+
+    .seg label.sel-bad {
+      background: var(--bad);
+      color: #fff;
+      font-weight: 600
+    }
+
+    .seg label.sel-plain {
+      background: var(--accent);
+      color: #fff;
+      font-weight: 600
+    }
+
+    .seg label.sel-na {
+      background: var(--na);
+      color: #fff;
+      font-weight: 600
+    }
+
+    .srcbox {
+      background: #fbfcfe;
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin: 10px 0;
+      font-size: 14px;
+      white-space: pre-wrap;
+      line-height: 1.85;
+      max-height: 320px;
+      overflow: auto
+    }
+
+    .srcbox .role {
+      font-size: 11px;
+      letter-spacing: .04em;
+      color: var(--muted);
+      font-weight: 700;
+      display: block;
+      margin-bottom: 4px
+    }
+
+    .srcbox.empty {
+      color: var(--warn);
+      font-style: italic
+    }
+
+    .meta-row {
+      font-size: 12px;
+      color: var(--muted);
+      margin: 2px 0 12px
+    }
+
+    .meta-row b {
+      color: var(--ink)
+    }
+
+    .entity-grid {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+      align-items: flex-end
+    }
+
+    .entity-grid .fld {
+      flex: 1;
+      min-width: 90px
+    }
+
+    .entity-grid .fld label {
+      font-size: 12px;
+      font-weight: 700;
+      display: block;
+      margin-bottom: 3px
+    }
+
+    .na-toggle {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px
+    }
+
+    .timer {
+      font-size: 12px;
+      color: var(--muted);
+      background: #f4f6fa;
+      border-radius: 6px;
+      padding: 4px 10px;
+      display: inline-block;
+      margin-top: 8px
+    }
+
+    .timer b {
+      color: var(--accent)
+    }
+
+    button {
+      font: inherit;
+      font-weight: 600;
+      border: 0;
+      border-radius: 9px;
+      padding: 11px 22px;
+      cursor: pointer
+    }
+
+    button.primary {
+      background: var(--accent);
+      color: #fff
+    }
+
+    button.ghost {
+      background: #fff;
+      border: 1px solid var(--line);
+      color: var(--ink)
+    }
+
+    button:disabled {
+      opacity: .4;
+      cursor: not-allowed
+    }
+
+    .footer-actions {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--card);
+      border-top: 1px solid var(--line);
+      padding: 12px 18px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      z-index: 30
+    }
+
+    .footer-actions .save-state {
+      font-size: 12px;
+      color: var(--muted);
+      align-self: center
+    }
+
+    .hidden {
+      display: none
+    }
+
+    .err {
+      color: var(--bad);
+      font-size: 13px;
+      margin-top: 8px;
+      font-weight: 600
+    }
+
+    .ok-msg {
+      color: var(--ok);
+      font-size: 14px;
+      margin-top: 8px;
+      font-weight: 600
+    }
+
+    .expert-pick {
+      display: flex;
+      gap: 14px;
+      margin: 10px 0
+    }
+
+    .expert-pick label {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: 2px solid var(--line);
+      border-radius: 10px;
+      padding: 16px;
+      cursor: pointer;
+      font-weight: 700;
+      -webkit-tap-highlight-color: rgba(47, 91, 208, .15)
+    }
+
+    .expert-pick label input {
+      width: 20px;
+      height: 20px;
+      flex: 0 0 auto;
+      margin: 0;
+      accent-color: var(--accent)
+    }
+
+    .expert-pick label .pick-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      text-align: left
+    }
+
+    .expert-pick label .pick-sub {
+      font-weight: 400;
+      font-size: 12px;
+      color: var(--muted)
+    }
+
+    .expert-pick label.sel {
+      border-color: var(--accent);
+      background: var(--accent-weak);
+      color: var(--accent)
+    }
+
+    .note-box {
+      background: #fff8ec;
+      border: 1px solid #ffe2b0;
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 13.5px;
+      color: #6b4e1e
+    }
+
+    .resume-box {
+      background: var(--accent-weak);
+      border: 1px solid #c5d4f5;
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px
+    }
+
+    .resume-box .resume-msg {
+      font-size: 14px;
+      color: var(--ink)
+    }
+
+    .resume-box button {
+      align-self: flex-start
+    }
+
+    table.review {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+      margin-top: 10px;
+      display: block;
+      overflow-x: auto
+    }
+
+    table.review th,
+    table.review td {
+      border: 1px solid var(--line);
+      padding: 5px 7px;
+      text-align: center;
+      white-space: nowrap
+    }
+
+    table.review th {
+      background: #f4f6fa
+    }
+
+    code {
+      background: #f0f2f6;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 12px
+    }
+  </style>
 </head>
+
 <body>
-<header class="bar">
-  <h1>專家評估 · 多語專利情報系統輸出品質</h1>
-  <span class="who" id="whoTag"></span>
-  <div class="progress-wrap"><div class="progress-bar" id="pbar"></div></div>
-  <div class="progress-pct" id="ppct">0%</div>
-</header>
-
-<main>
-  <!-- ===== 引言／同意／校準 ===== -->
-  <section class="card screen" data-screen="intro">
-    <div id="resumeBox" class="resume-box hidden">
-      <div class="resume-msg">偵測到您上次<strong>已填寫但尚未送出</strong>的評分（<span id="resumeInfo"></span>）。</div>
-      <button class="primary" id="resumeBtn">繼續上次填答並送出</button>
+  <header class="bar">
+    <h1>專家評估 · 多語專利情報系統輸出品質</h1>
+    <span class="who" id="whoTag"></span>
+    <div class="progress-wrap">
+      <div class="progress-bar" id="pbar"></div>
     </div>
-    <span class="pill">說明 · 第 1 步</span><span class="draft-tag">pilot N=13</span>
-    <h2>人工專家評分 — 系統自動產出之品質評核</h2>
-    <p class="lead">感謝您參與。本評估針對多語專利情報自動化系統（GPT-4.1 mini）對每筆情報的<strong>自動產出</strong>
-      （翻譯、摘要、實體標註、文件類型、行動性），由專家獨立評核其品質，作為 (a) 輸出品質的人類基準；
-      (b) 對既有 LLM-as-Judge 評分的三角驗證。</p>
+    <div class="progress-pct" id="ppct">0%</div>
+  </header>
 
-    <h3>您要評核什麼</h3>
-    <p>每筆提供：<strong>原文</strong>、系統<strong>翻譯</strong>、系統<strong>摘要</strong>、系統<strong>實體／關鍵詞</strong>。
-      請<strong>對照原文</strong>評核系統產出，而非自己重寫。題數依您所選的翻譯語言而定（共 <strong id="introCount">4–8</strong> 筆）：選「英文」者僅出現英文來源題；選「英文／韓文」者另含韓文來源題。</p>
+  <main>
+    <!-- ===== 引言／同意／校準 ===== -->
+    <section class="card screen" data-screen="intro">
+      <div id="resumeBox" class="resume-box hidden">
+        <div class="resume-msg">偵測到您上次<strong>已填寫但尚未送出</strong>的評分（<span id="resumeInfo"></span>）。</div>
+        <button class="primary" id="resumeBtn">繼續上次填答並送出</button>
+      </div>
+      <span class="pill">說明 · 第 1 步</span><span class="draft-tag">pilot N=13</span>
+      <h2>專家評分 — 系統自動產出之品質評核</h2>
+      <p class="lead">感謝您參與。本評估針對多語專利情報自動化系統（GPT-4.1 mini）對每筆情報的<strong>自動產出</strong>
+        （翻譯、摘要、實體標註、文件類型、行動性），由專家獨立評核其品質，作為輸出品質的人類基準。 </p>
 
-    <h3>評分規則（務必遵守）</h3>
-    <div class="note-box">
-      <strong>1. 獨立作業：</strong>兩位專家不得互相討論後再各自填（歧異留待事後仲裁）。<br>
-      <strong>2. 盲評：</strong>系統對 Document type / Actionability 的初判<strong>不會顯示</strong>給您（那是待驗證的輸出，非答案）。<br>
-      <strong>3. 題序隨機：</strong>每位評分者的題目順序各自隨機化，屬正常。<br>
-      <strong>4. 空來源規則（重要）：</strong>若某筆未隨 feed 提供原文全文，請先<b>點選該筆的「原文連結」開啟原文</b>閱讀後再判定；若開啟後仍不足以判斷某維度，該維度才選 <b>N/A</b>，<u>不要</u>給最低分。<br>
-      <strong>5. 校準回合：</strong>正式作答前，請兩位專家先共同檢視 2–3 筆範例、逐維度對齊評分標準與 N/A 時機，再各自獨立評全部 13 筆。
-    </div>
+      <h3>您要評核什麼</h3>
+      <p>每筆提供：<strong>原文</strong>、系統<strong>翻譯</strong>、系統<strong>摘要</strong>、系統<strong>實體／關鍵詞</strong>。
+        請<strong>對照原文</strong>評核系統產出，而非自己重寫。題數依您所選的翻譯語言而定（共 <strong id="introCount">4–8</strong>
+        筆）：選「英文」者僅出現英文來源題；選「英文／韓文」者另含韓文來源題。</p>
 
-    <label class="q" style="margin-top:18px"><input type="checkbox" id="consent" /> 我已閱讀並理解上述規則，且已完成（或將完成）校準回合，同意獨立參與本評估。<span class="req">*</span></label>
-    <div class="err hidden" id="consentErr">請先勾選同意，方可繼續。</div>
-  </section>
+      <h3>評分規則（務必遵守）</h3>
+      <div class="note-box">
+        <strong>1. 獨立作業：</strong>專家填寫（歧異留待事後仲裁）。<br>
+        <strong>2. 盲評：</strong>系統對文件類型 (Document type) / 文件重要程度 (Actionability)
+        的初判<strong>不會顯示</strong>給您（那是待驗證的輸出，非答案）。<br>
+        <strong>3. 題序隨機：</strong>每位評分者的題目順序各自隨機化，屬正常。<br>
+        <strong>4. 空來源規則（重要）：</strong>若某筆未隨 feed 提供原文全文，請先<b>點選該筆的「原文連結」開啟原文</b>閱讀後再判定；若開啟後仍不足以判斷某維度，該維度才選
+        <b>N/A</b>，<u>不要</u>給最低分。<br>
+        <strong>5. 校準：</strong> 請專家逐項進行評分。
+      </div>
 
-  <!-- ===== 評分者身分 ===== -->
-  <section class="card screen hidden" data-screen="expert">
-    <span class="pill">身分 · 第 2 步</span>
-    <h2>您負責評估哪一種翻譯語言？</h2>
-    <p class="lead">本 pilot 由兩位專家獨立評分，依負責的翻譯語言區分。請選擇您被指派的語言（題序將依此各自隨機化）。</p>
-    <div class="expert-pick" id="expertPick">
-      <label data-val="A"><input type="radio" name="expertPickRadio" value="A"><span class="pick-text"><span>英文</span><span class="pick-sub">English（評分者 A）</span></span></label>
-      <label data-val="B"><input type="radio" name="expertPickRadio" value="B"><span class="pick-text"><span>英文／韓文</span><span class="pick-sub">English／Korean（評分者 B）</span></span></label>
-    </div>
-    <label class="q">姓名／代號 <span class="hint">選填，僅供研究團隊辨識，不公開</span></label>
-    <input type="text" id="raterName" placeholder="例如：王小明 或 A1" />
-    <label class="q">所在地區 <span class="hint">選填，用於描述跨地區樣本</span></label>
-    <select id="raterRegion">
-      <option value="">— 請選擇 —</option>
-      <option>台灣</option><option>中國大陸</option><option>香港／澳門</option><option>日本</option>
-      <option>韓國</option><option>新加坡／東南亞</option><option>歐洲</option><option>北美</option><option>其他</option>
-    </select>
-    <div class="err hidden" id="expertErr">請先選擇您負責的翻譯語言（英文 或 英文／韓文）。</div>
-  </section>
+      <label class="q" style="margin-top:18px"><input type="checkbox" id="consent" />
+        我已閱讀並理解上述規則，且已完成（或將完成）校準回合，同意獨立參與本評估。<span class="req">*</span></label>
+      <div class="err hidden" id="consentErr">請先勾選同意，方可繼續。</div>
+    </section>
 
-  <!-- ===== 單筆評估（動態） ===== -->
-  <section class="card screen hidden" data-screen="item">
-    <span class="pill" id="itemPill">項目</span>
-    <h2 id="itemTitle">評估項目</h2>
-    <div class="meta-row" id="itemMeta"></div>
+    <!-- ===== 評分者身分 ===== -->
+    <section class="card screen hidden" data-screen="expert">
+      <span class="pill">身分 · 第 2 步</span>
+      <h2>您負責評估哪一種翻譯語言？</h2>
+      <p class="lead">本 pilot 由兩位專家獨立評分，依負責的翻譯語言區分。請選擇您被指派的語言（題序將依此各自隨機化）。</p>
+      <div class="expert-pick" id="expertPick">
+        <label data-val="A"><input type="radio" name="expertPickRadio" value="A"><span
+            class="pick-text"><span>英文</span><span class="pick-sub">English（評分者 A）</span></span></label>
+        <label data-val="B"><input type="radio" name="expertPickRadio" value="B"><span
+            class="pick-text"><span>英文／韓文</span><span class="pick-sub">English／Korean（評分者 B）</span></span></label>
+      </div>
+      <label class="q">姓名／代號 <span class="hint">選填，僅供研究團隊辨識，不公開</span></label>
+      <input type="text" id="raterName" placeholder="例如：王小明 或 A1" />
+      <label class="q">所在地區 <span class="hint">選填，用於描述跨地區樣本</span></label>
+      <select id="raterRegion">
+        <option value="">— 請選擇 —</option>
+        <option>台灣</option>
+        <option>中國大陸</option>
+        <option>香港／澳門</option>
+        <option>日本</option>
+        <option>韓國</option>
+        <option>新加坡／東南亞</option>
+        <option>歐洲</option>
+        <option>北美</option>
+        <option>其他</option>
+      </select>
+      <div class="err hidden" id="expertErr">請先選擇您負責的翻譯語言（英文 或 英文／韓文）。</div>
+    </section>
 
-    <div class="srcbox" id="srcOriginal"><span class="role">原文（來源語言）</span><span id="srcOriginalText"></span></div>
-    <div class="srcbox" id="srcTranslation"><span class="role">系統繁體中文翻譯</span><span id="srcTranslationText"></span></div>
-    <div class="srcbox" id="srcSummary"><span class="role">系統摘要</span><span id="srcSummaryText"></span></div>
-    <div class="srcbox" id="srcTags"><span class="role">系統實體／關鍵詞（system_tags）</span><span id="srcTagsText"></span></div>
-    <div class="timer" id="itemTimer">本題作答時間：<b id="timerVal">0</b> 秒（自動記錄）</div>
+    <!-- ===== 單筆評估（動態） ===== -->
+    <section class="card screen hidden" data-screen="item">
+      <span class="pill" id="itemPill">項目</span>
+      <h2 id="itemTitle">評估項目</h2>
+      <div class="meta-row" id="itemMeta"></div>
 
-    <!-- Q1 -->
-    <h3>Q1 · 翻譯適切性 Translation adequacy</h3>
-    <label class="q">這段翻譯對照原文的語意完整與術語正確程度？ <span class="req">*</span>
-      <span class="anchor">5 語意完整、術語正確、可直接發布；4 語意完整、≤1 處小瑕；3 大意正確、數處術語錯誤需編修；2 局部語意偏離、多處錯誤；1 重大誤譯／語意喪失。來源不足選 N/A。</span></label>
-    <div class="scale" data-field="Q1_translation_adequacy" data-type="likert"></div>
+      <div class="srcbox" id="srcOriginal"><span class="role">原文（來源語言）</span><span id="srcOriginalText"></span></div>
+      <div class="srcbox" id="srcTranslation"><span class="role">系統繁體中文翻譯</span><span id="srcTranslationText"></span>
+      </div>
+      <div class="srcbox" id="srcSummary"><span class="role">系統摘要</span><span id="srcSummaryText"></span></div>
+      <div class="srcbox" id="srcTags"><span class="role">系統實體／關鍵詞（system_tags）</span><span id="srcTagsText"></span>
+      </div>
+      <div class="timer" id="itemTimer">本題作答時間：<b id="timerVal">0</b> 秒（自動記錄）</div>
 
-    <!-- Q2 -->
-    <h3>Q2 · 摘要忠實度 Summarization faithfulness</h3>
-    <label class="q">摘要是否忠於原文、未加入原文未含內容？ <span class="req">*</span>
-      <span class="anchor">5 全忠實、無原文未含內容；4 忠實、輕微遺漏；3 大致忠實、1 處小幅未支持細節；2 明顯幻覺／遺漏；1 重大幻覺／矛盾。來源不足選 N/A。</span></label>
-    <div class="scale" data-field="Q2_summ_faithfulness" data-type="likert"></div>
+      <!-- Q1 -->
+      <h3>Q1 · 翻譯適切性 Translation adequacy</h3>
+      <label class="q">這段翻譯對照原文的語意完整與術語正確程度？ <span class="req">*</span>
+        <span class="anchor">5 語意完整、術語正確、可直接發布；4 語意完整、≤1 處小瑕；3 大意正確、數處術語錯誤需編修；2 局部語意偏離、多處錯誤；1 重大誤譯／語意喪失。來源不足選
+          N/A。</span></label>
+      <div class="scale" data-field="Q1_translation_adequacy" data-type="likert"></div>
 
-    <!-- Q3 -->
-    <h3>Q3 · 幻覺 Hallucination（source unfaithfulness）</h3>
-    <label class="q">摘要或翻譯是否出現<strong>原文沒有的內容</strong>（捏造事實／數據／實體）？ <span class="req">*</span></label>
-    <div class="seg" data-field="Q3_hallucination" data-type="yesno">
-      <label data-val="Yes">Yes（有）</label><label data-val="No">No（無）</label><label data-val="N/A">N/A</label>
-    </div>
+      <!-- Q2 -->
+      <h3>Q2 · 摘要忠實度 Summarization faithfulness</h3>
+      <label class="q">摘要是否忠於原文、未加入原文未含內容？ <span class="req">*</span>
+        <span class="anchor">5 全忠實、無原文未含內容；4 忠實、輕微遺漏；3 大致忠實、1 處小幅未支持細節；2 明顯幻覺／遺漏；1 重大幻覺／矛盾。來源不足選 N/A。</span></label>
+      <div class="scale" data-field="Q2_summ_faithfulness" data-type="likert"></div>
 
-    <!-- Q4 -->
-    <h3>Q4 · 實體擷取 Entity TP / FP / FN</h3>
-    <label class="q">對照原文，計算系統 <code>system_tags</code> 的命中情形（整數）： <span class="req">*</span>
-      <span class="anchor">TP＝正確且原文確有的實體數；FP＝系統列出但錯誤／不存在的數；FN＝原文重要實體但系統漏列的數。以具識別性的實體為準（機構、法規／條約名、技術、地名、產品、日期）。</span></label>
-    <div class="entity-grid">
-      <div class="fld"><label>TP</label><input type="number" min="0" step="1" data-entity="Q4_entity_TP" /></div>
-      <div class="fld"><label>FP</label><input type="number" min="0" step="1" data-entity="Q4_entity_FP" /></div>
-      <div class="fld"><label>FN</label><input type="number" min="0" step="1" data-entity="Q4_entity_FN" /></div>
-    </div>
-    <label class="na-toggle"><input type="checkbox" id="q4na" /> 此筆來源不足，實體無法判定（N/A）</label>
+      <!-- Q3 -->
+      <h3>Q3 · 幻覺 Hallucination（source unfaithfulness）</h3>
+      <label class="q">摘要或翻譯是否出現<strong>原文沒有的內容</strong>（捏造事實／數據／實體）？ <span class="req">*</span></label>
+      <div class="seg" data-field="Q3_hallucination" data-type="yesno">
+        <label data-val="Yes">Yes（有）</label><label data-val="No">No（無）</label><label data-val="N/A">N/A</label>
+      </div>
 
-    <!-- Q5 -->
-    <h3>Q5 · 文件類型 Document type（gold，盲評）</h3>
-    <label class="q">您判定該筆<strong>應屬</strong>的類型？ <span class="req">*</span>
-      <span class="anchor">news 純資訊新聞；legal-regulatory 法規／程序／審查指引變動；publication 報告／出版品／專利公告；administrative 行政公告／系統／計畫／合作；event 活動／獎項／期限。</span></label>
-    <div class="seg" data-field="Q5_document_type" data-type="cat" data-opts="news,legal-regulatory,publication,administrative,event,N/A"></div>
+      <!-- Q4 -->
+      <h3>Q4 · 實體擷取 Entity TP / FP / FN</h3>
+      <label class="q">對照系統實體/關鍵詞，計算 <code>system_tags</code> 的命中情形（整數）： <span class="req">*</span>
+        <span
+          class="anchor">TP＝正確且原文確有的實體數；FP＝系統列出但錯誤／不存在的數；FN＝原文重要實體但系統漏列的數。以具識別性的實體為準（機構、法規／條約名、技術、地名、產品、日期）。</span></label>
+      <div class="entity-grid">
+        <div class="fld"><label>TP</label><input type="number" min="0" step="1" data-entity="Q4_entity_TP" /></div>
+        <div class="fld"><label>FP</label><input type="number" min="0" step="1" data-entity="Q4_entity_FP" /></div>
+        <div class="fld"><label>FN</label><input type="number" min="0" step="1" data-entity="Q4_entity_FN" /></div>
+      </div>
+      <label class="na-toggle"><input type="checkbox" id="q4na" /> 此筆來源不足，實體無法判定（N/A）</label>
 
-    <!-- Q6 -->
-    <h3>Q6 · 行動性 Actionability</h3>
-    <label class="q">本筆情報的行動急迫性？ <span class="req">*</span>
-      <span class="anchor">High 需即時關注（法規／程序變動、系統中斷、迫近期限）；Medium 值得監測（政策／合作／機會／教育）；Low 純資訊（成功故事／里程碑）。</span></label>
-    <div class="seg" data-field="Q6_actionability" data-type="cat" data-opts="High,Medium,Low,N/A"></div>
+      <!-- Q5 -->
+      <h3>Q5 · 文件類型: Document type </h3>
+      <label class="q">您判定該筆<strong>應屬</strong>的類型？ <span class="req">*</span>
+        <span class="anchor">news 純資訊新聞；legal-regulatory 法規／程序／審查指引變動；publication 報告／出版品／專利公告；administrative
+          行政公告／系統／計畫／合作；event 活動／獎項／期限。</span></label>
+      <div class="seg" data-field="Q5_document_type" data-type="cat"
+        data-opts="news,legal-regulatory,publication,administrative,event,N/A"></div>
 
-    <!-- Q7 -->
-    <h3>Q7 · 格式合規 Format compliance</h3>
-    <label class="q">系統輸出是否符合預期格式規範（欄位完整、無格式破損）？ <span class="req">*</span></label>
-    <div class="seg" data-field="Q7_format_compliance" data-type="passfail">
-      <label data-val="Pass">Pass</label><label data-val="Fail">Fail</label>
-    </div>
+      <!-- Q6 -->
+      <h3>Q6 ·重要程度: Actionability</h3>
+      <label class="q">本筆情報的急迫性？ <span class="req">*</span>
+        <span class="anchor">High 需即時關注（法規／程序變動、系統中斷、迫近期限）；Medium 值得監測（政策／合作／機會／教育）；Low 純資訊（成功故事／里程碑）。</span></label>
+      <div class="seg" data-field="Q6_actionability" data-type="cat" data-opts="High,Medium,Low,N/A"></div>
 
-    <!-- Q8 -->
-    <h3>Q8 · 整體可用性 Overall usefulness</h3>
-    <label class="q">此輸出<strong>原樣</strong>是否可供專利專業人員日常監測／分流？ <span class="req">*</span>
-      <span class="anchor">5 可直接使用 … 1 不可用。來源不足選 N/A。</span></label>
-    <div class="scale" data-field="Q8_overall_usefulness" data-type="likert"></div>
+      <!-- Q7 -->
+      <h3>Q7 · 格式合規: Format compliance</h3>
+      <label class="q">系統輸出是否符合預期格式規範（欄位完整、無格式破損）？ <span class="req">*</span></label>
+      <div class="seg" data-field="Q7_format_compliance" data-type="passfail">
+        <label data-val="Pass">Pass</label><label data-val="Fail">Fail</label>
+      </div>
 
-    <h3>Notes</h3>
-    <label class="q">判分理由、疑點或特殊情況 <span class="hint">選填</span></label>
-    <textarea data-field="Notes" placeholder="選填"></textarea>
-    <div class="err hidden" id="itemErr">請先完成所有必填（*）題目再繼續。</div>
-  </section>
+      <!-- Q8 -->
+      <h3>Q8 · 整體可用性: Overall usefulness</h3>
+      <label class="q">此輸出<strong>原樣</strong>是否可供專利專業人員日常監測／分流？ <span class="req">*</span>
+        <span class="anchor">5 可直接使用 … 1 不可用。來源不足選 N/A。</span></label>
+      <div class="scale" data-field="Q8_overall_usefulness" data-type="likert"></div>
 
-  <!-- ===== 完成 ===== -->
-  <section class="card screen hidden" data-screen="done">
-    <span class="pill">完成 · 第 3 步</span>
-    <h2 id="doneTitle">正在送出您的評分…</h2>
-    <p class="lead" id="doneLead">系統正在自動送出，請稍候，並保持本頁開啟直到看到「✓ 已送出」。</p>
-    <div class="footer-actions" style="position:static;border:0;padding:0;margin-bottom:10px;background:none">
-      <button class="primary" id="submitBtn" onclick="submitData()">送出評分</button>
-    </div>
-    <div class="ok-msg hidden" id="submitOk">✓ 已送出，感謝您！</div>
-    <div class="err hidden" id="submitErr"></div>
-    <h3>您的評分摘要</h3>
-    <div id="reviewTable"></div>
-  </section>
-</main>
+      <h3>Notes</h3>
+      <label class="q">判分理由、疑點或特殊情況 <span class="hint">選填</span></label>
+      <textarea data-field="Notes" placeholder="選填"></textarea>
+      <div class="err hidden" id="itemErr">請先完成所有必填（*）題目再繼續。</div>
+    </section>
 
-<div class="footer-actions">
-  <button class="ghost" id="backBtn" onclick="go(-1)">← 上一步</button>
-  <span class="save-state" id="saveState">已於本機自動暫存</span>
-  <button class="primary" id="nextBtn" onclick="go(1)">繼續 →</button>
-</div>
+    <!-- ===== 完成 ===== -->
+    <section class="card screen hidden" data-screen="done">
+      <span class="pill">完成 · 第 3 步</span>
+      <h2 id="doneTitle">正在送出您的評分…</h2>
+      <p class="lead" id="doneLead">系統正在自動送出，請稍候，並保持本頁開啟直到看到「✓ 已送出」。</p>
+      <div class="footer-actions" style="position:static;border:0;padding:0;margin-bottom:10px;background:none">
+        <button class="primary" id="submitBtn" onclick="submitData()">送出評分</button>
+      </div>
+      <div class="ok-msg hidden" id="submitOk">✓ 已送出，感謝您！</div>
+      <div class="err hidden" id="submitErr"></div>
+      <h3>您的評分摘要</h3>
+      <div id="reviewTable"></div>
+    </section>
+  </main>
 
-<script src="items.js"></script>
-<script>
-/* ============================================================
-   設定（CONFIG）
-   submitEndpoint: 後台收集端點（Google Apps Script /exec 網址）。
-     設定後「送出評分」會 POST JSON。留空則僅能下載檔案。
-   ============================================================ */
-const CONFIG = { submitEndpoint: "https://script.google.com/macros/s/AKfycbyhAXSmSdAYHOuudVoSsyj9_DGImJH8T_oGOwcldEP3uzfXkLbBdvAdqMIqwklAILWt/exec" };
+  <div class="footer-actions">
+    <button class="ghost" id="backBtn" onclick="go(-1)">← 上一步</button>
+    <span class="save-state" id="saveState">已於本機自動暫存</span>
+    <button class="primary" id="nextBtn" onclick="go(1)">繼續 →</button>
+  </div>
 
-const SURVEY_META = { title: "多語專利情報系統輸出 — 人工專家 pilot 評估", version: "1.0", n_items: 13 };
-const ITEMS = (window.ITEMS || []);
-const SEED = { A: 101, B: 202 };
-const EXPERT_LANG = { A: "英文", B: "英文／韓文" };  // 評分者依負責的翻譯語言區分
+  <script src="items.js"></script>
+  <script>
+    /* ============================================================
+       設定（CONFIG）
+       submitEndpoint: 後台收集端點（Google Apps Script /exec 網址）。
+         設定後「送出評分」會 POST JSON。留空則僅能下載檔案。
+       ============================================================ */
+    const CONFIG = { submitEndpoint: "https://script.google.com/macros/s/AKfycbyhAXSmSdAYHOuudVoSsyj9_DGImJH8T_oGOwcldEP3uzfXkLbBdvAdqMIqwklAILWt/exec" };
 
-/* 必填欄位（與 Expert 表欄名一致） */
-const REQUIRED = ["Q1_translation_adequacy","Q2_summ_faithfulness","Q3_hallucination",
-  "Q5_document_type","Q6_actionability","Q7_format_compliance","Q8_overall_usefulness"];
+    const SURVEY_META = { title: "多語專利情報系統輸出 — 人工專家 pilot 評估", version: "1.0", n_items: 13 };
+    const ITEMS = (window.ITEMS || []);
+    const SEED = { A: 101, B: 202 };
+    const EXPERT_LANG = { A: "英文", B: "英文／韓文" };  // 評分者依負責的翻譯語言區分
 
-const SCREENS = ["intro","expert","item","done"];
-let state = { screenIdx:0, itemIdx:0, consent:false, expert:null, rater:{}, items:{}, order:null, startedAt:null };
-const $ = s => document.querySelector(s);
-function $$(sel,root){ return Array.from((root||document).querySelectorAll(sel)); }
-function storageKey(){ return "patent_expert_eval_" + (state.expert||"none") + "_" + SURVEY_META.version; }
+    /* 必填欄位（與 Expert 表欄名一致） */
+    const REQUIRED = ["Q1_translation_adequacy", "Q2_summ_faithfulness", "Q3_hallucination",
+      "Q5_document_type", "Q6_actionability", "Q7_format_compliance", "Q8_overall_usefulness"];
 
-/* ---- 暫存 ---- */
-function save(){ try{ localStorage.setItem(storageKey(), JSON.stringify(state)); $("#saveState").textContent="已於本機自動暫存 ✓"; }catch(e){ $("#saveState").textContent="（暫存無法使用）"; } }
-/* 還原某評分者先前已填的答案/題序（不覆蓋目前的 screenIdx/consent/expert，
-   否則返填的人重選身分時導覽會被帶回舊頁，造成「按繼續沒反應」） */
-function loadFor(expert){ try{ const r=localStorage.getItem("patent_expert_eval_"+expert+"_"+SURVEY_META.version); if(r){ const s=JSON.parse(r); state.items=s.items||{}; state.order=s.order||null; state.rater=s.rater||state.rater; state.startedAt=s.startedAt||state.startedAt; } }catch(e){} }
-/* 選擇評分者（英文＝A／英文＋韓文＝B）；由 radio 的 change 觸發，touch 裝置可靠 */
-function pickExpert(val){
-  if(state.expert!==val){ state.expert=val; loadFor(val); state.expert=val; }
-  ensureOrder(); paintExpert(); save();
-}
+    const SCREENS = ["intro", "expert", "item", "done"];
+    let state = { screenIdx: 0, itemIdx: 0, consent: false, expert: null, rater: {}, items: {}, order: null, startedAt: null };
+    const $ = s => document.querySelector(s);
+    function $$(sel, root) { return Array.from((root || document).querySelectorAll(sel)); }
+    function storageKey() { return "patent_expert_eval_" + (state.expert || "none") + "_" + SURVEY_META.version; }
 
-/* ---- 種子隨機題序（mulberry32） ---- */
-function seededOrder(seed,n){
-  let a=seed>>>0; const rnd=()=>{ a|=0;a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; };
-  const idx=[...Array(n).keys()];
-  for(let i=n-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); [idx[i],idx[j]]=[idx[j],idx[i]]; }
-  return idx;
-}
-/* 依評分者語言能力篩題：A=英文 → 僅英文來源題；B=英文／韓文 → 全部 */
-function canSee(m){ return state.expert==="B" ? true : (m.lang!=="ko"); }
-function visibleIdx(){ return ITEMS.map((m,i)=>i).filter(i=>canSee(ITEMS[i])); }
-function ensureOrder(){
-  const vis=visibleIdx();
-  const valid = state.order && state.order.length===vis.length && state.order.every(i=>vis.includes(i));
-  if(!valid){ const perm=seededOrder(SEED[state.expert]||1, vis.length); state.order=perm.map(k=>vis[k]); state.itemIdx=Math.min(state.itemIdx, Math.max(0,vis.length-1)); }
-}
-function visCount(){ return state.order ? state.order.length : 0; }
+    /* ---- 暫存 ---- */
+    function save() { try { localStorage.setItem(storageKey(), JSON.stringify(state)); $("#saveState").textContent = "已於本機自動暫存 ✓"; } catch (e) { $("#saveState").textContent = "（暫存無法使用）"; } }
+    /* 還原某評分者先前已填的答案/題序（不覆蓋目前的 screenIdx/consent/expert，
+       否則返填的人重選身分時導覽會被帶回舊頁，造成「按繼續沒反應」） */
+    function loadFor(expert) { try { const r = localStorage.getItem("patent_expert_eval_" + expert + "_" + SURVEY_META.version); if (r) { const s = JSON.parse(r); state.items = s.items || {}; state.order = s.order || null; state.rater = s.rater || state.rater; state.startedAt = s.startedAt || state.startedAt; } } catch (e) { } }
+    /* 選擇評分者（英文＝A／英文＋韓文＝B）；由 radio 的 change 觸發，touch 裝置可靠 */
+    function pickExpert(val) {
+      if (state.expert !== val) { state.expert = val; loadFor(val); state.expert = val; }
+      ensureOrder(); paintExpert(); save();
+    }
 
-/* ---- 計時 ---- */
-let timerHandle=null, enterTs=0;
-function perfNow(){ return (window.performance&&performance.now)?performance.now():0; }
-function startTimer(){ enterTs=perfNow(); clearInterval(timerHandle); timerHandle=setInterval(()=>{ $("#timerVal").textContent=Math.round((curItem()._acc||0)+(perfNow()-enterTs)/1000); },1000); }
-function stopTimer(){ clearInterval(timerHandle); const d=curItem(); d._acc=(d._acc||0)+(perfNow()-enterTs)/1000; d.seconds_spent=Math.round(d._acc); save(); }
+    /* ---- 種子隨機題序（mulberry32） ---- */
+    function seededOrder(seed, n) {
+      let a = seed >>> 0; const rnd = () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+      const idx = [...Array(n).keys()];
+      for (let i = n - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1));[idx[i], idx[j]] = [idx[j], idx[i]]; }
+      return idx;
+    }
+    /* 依評分者語言能力篩題：A=英文 → 僅英文來源題；B=英文／韓文 → 全部 */
+    function canSee(m) { return state.expert === "B" ? true : (m.lang !== "ko"); }
+    function visibleIdx() { return ITEMS.map((m, i) => i).filter(i => canSee(ITEMS[i])); }
+    function ensureOrder() {
+      const vis = visibleIdx();
+      const valid = state.order && state.order.length === vis.length && state.order.every(i => vis.includes(i));
+      if (!valid) { const perm = seededOrder(SEED[state.expert] || 1, vis.length); state.order = perm.map(k => vis[k]); state.itemIdx = Math.min(state.itemIdx, Math.max(0, vis.length - 1)); }
+    }
+    function visCount() { return state.order ? state.order.length : 0; }
 
-/* ---- 目前項目 ---- */
-function metaIdx(){ ensureOrder(); return state.order[state.itemIdx]; }
-function curMeta(){ return ITEMS[metaIdx()]; }
-function curItem(){ const id=curMeta().item_id; if(!state.items[id]) state.items[id]={}; return state.items[id]; }
-function setField(f,v){ curItem()[f]=v; save(); }
+    /* ---- 計時 ---- */
+    let timerHandle = null, enterTs = 0;
+    function perfNow() { return (window.performance && performance.now) ? performance.now() : 0; }
+    function startTimer() { enterTs = perfNow(); clearInterval(timerHandle); timerHandle = setInterval(() => { $("#timerVal").textContent = Math.round((curItem()._acc || 0) + (perfNow() - enterTs) / 1000); }, 1000); }
+    function stopTimer() { clearInterval(timerHandle); const d = curItem(); d._acc = (d._acc || 0) + (perfNow() - enterTs) / 1000; d.seconds_spent = Math.round(d._acc); save(); }
 
-/* ---- builders ---- */
-function buildScale(el){
-  const field=el.dataset.field; el.innerHTML="";
-  for(let i=1;i<=5;i++){ const l=document.createElement("label"); l.className="opt"; l.dataset.val=String(i); l.innerHTML=`<span class="num">${i}</span>`; l.onclick=()=>{ setField(field,i); paintScale(el); }; el.appendChild(l); }
-  const na=document.createElement("label"); na.className="opt na"; na.dataset.val="N/A"; na.textContent="N/A"; na.onclick=()=>{ setField(field,"N/A"); paintScale(el); }; el.appendChild(na);
-}
-function paintScale(el){ const v=String(curItem()[el.dataset.field]); $$("label",el).forEach(l=>l.classList.toggle("sel", l.dataset.val===v)); }
-function buildSeg(el){
-  if(el.dataset.opts){ el.innerHTML=""; el.dataset.opts.split(",").forEach(o=>{ const l=document.createElement("label"); l.dataset.val=o; l.textContent=o; el.appendChild(l); }); }
-  const field=el.dataset.field;
-  $$("label",el).forEach(l=>{ l.onclick=()=>{ setField(field,l.dataset.val); paintSeg(el); }; });
-}
-function paintSeg(el){
-  const v=String(curItem()[el.dataset.field]), type=el.dataset.type;
-  $$("label",el).forEach(l=>{
-    l.classList.remove("sel-good","sel-bad","sel-plain","sel-na");
-    if(l.dataset.val!==v) return;
-    if(v==="N/A") l.classList.add("sel-na");
-    else if(type==="yesno") l.classList.add(v==="No"?"sel-good":"sel-bad");
-    else if(type==="passfail") l.classList.add(v==="Pass"?"sel-good":"sel-bad");
-    else l.classList.add("sel-plain");
-  });
-}
+    /* ---- 目前項目 ---- */
+    function metaIdx() { ensureOrder(); return state.order[state.itemIdx]; }
+    function curMeta() { return ITEMS[metaIdx()]; }
+    function curItem() { const id = curMeta().item_id; if (!state.items[id]) state.items[id] = {}; return state.items[id]; }
+    function setField(f, v) { curItem()[f] = v; save(); }
 
-/* ---- 繪製單筆 ---- */
-function renderItem(){
-  const m=curMeta(), d=curItem();
-  $("#itemPill").textContent=`項目 ${state.itemIdx+1} / ${visCount()}`;
-  $("#itemTitle").textContent=`評估項目（編號 ${m.item_id}）`;
-  $("#itemMeta").innerHTML=`來源 <b>${esc(m.source||"—")}</b> · feed <b>${esc(m.feed||"—")}</b>` + (m.link?` · <a href="${esc(m.link)}" target="_blank" rel="noopener">原文連結 ↗</a>`:"");
-  renderOriginal(m);
-  setSrc("#srcTranslation","#srcTranslationText", m.system_translation, "系統繁體中文翻譯");
-  setSrc("#srcSummary","#srcSummaryText", m.system_summary, "系統摘要");
-  setSrc("#srcTags","#srcTagsText", m.system_tags, "系統實體／關鍵詞（system_tags）");
-  $$(".scale").forEach(el=>{ buildScale(el); paintScale(el); });
-  $$(".seg").forEach(el=>{ buildSeg(el); paintSeg(el); });
-  // Q4
-  const q4na=$("#q4na"); q4na.checked = (d.Q4_entity_TP==="N/A");
-  $$('input[data-entity]').forEach(inp=>{ const f=inp.dataset.entity; inp.value=(d[f]!=null&&d[f]!=="N/A")?d[f]:""; inp.disabled=q4na.checked; inp.oninput=()=>{ const n=inp.value===""?null:parseInt(inp.value,10); setField(f, (n==null||isNaN(n))?null:n); }; });
-  q4na.onchange=()=>{ const on=q4na.checked; ["Q4_entity_TP","Q4_entity_FP","Q4_entity_FN"].forEach(f=>setField(f, on?"N/A":null)); $$('input[data-entity]').forEach(i=>{ i.disabled=on; if(on) i.value=""; }); };
-  // Notes
-  const ta=$('textarea[data-field="Notes"]'); ta.value=d.Notes||""; ta.oninput=()=>setField("Notes",ta.value);
-  $("#timerVal").textContent=Math.round(d._acc||0);
-  startTimer();
-}
-function renderOriginal(m){
-  const el=$("#srcOriginal"), t=$("#srcOriginalText");
-  el.querySelector(".role").textContent="原文（來源語言）";
-  const oc=(m.original_content==null?"":String(m.original_content)).trim();
-  if(oc){ t.textContent=oc; el.classList.remove("empty"); return; }
-  el.classList.add("empty");
-  if(m.link){
-    t.innerHTML='本筆未隨 feed 提供全文內容。請<a href="'+esc(m.link)+'" target="_blank" rel="noopener"><b>點選原文連結開啟原文 ↗</b></a>，閱讀原文後再進行各維度判定。<br>（若開啟連結後仍不足以判斷某維度，該維度再選 N/A。）';
-  } else {
-    t.textContent="（原文內容缺失，且無原文連結 — 無法判斷的維度請選 N/A）";
-  }
-}
-function setSrc(box,txt,content,role,emptyMsg){
-  const el=$(box), t=$(txt); const c=(content==null?"":String(content)).trim();
-  el.querySelector(".role").textContent=role;
-  if(c){ t.textContent=c; el.classList.remove("empty"); }
-  else { t.textContent=emptyMsg||"（無內容）"; el.classList.add("empty"); }
-}
-function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+    /* ---- builders ---- */
+    function buildScale(el) {
+      const field = el.dataset.field; el.innerHTML = "";
+      for (let i = 1; i <= 5; i++) { const l = document.createElement("label"); l.className = "opt"; l.dataset.val = String(i); l.innerHTML = `<span class="num">${i}</span>`; l.onclick = () => { setField(field, i); paintScale(el); }; el.appendChild(l); }
+      const na = document.createElement("label"); na.className = "opt na"; na.dataset.val = "N/A"; na.textContent = "N/A"; na.onclick = () => { setField(field, "N/A"); paintScale(el); }; el.appendChild(na);
+    }
+    function paintScale(el) { const v = String(curItem()[el.dataset.field]); $$("label", el).forEach(l => l.classList.toggle("sel", l.dataset.val === v)); }
+    function buildSeg(el) {
+      if (el.dataset.opts) { el.innerHTML = ""; el.dataset.opts.split(",").forEach(o => { const l = document.createElement("label"); l.dataset.val = o; l.textContent = o; el.appendChild(l); }); }
+      const field = el.dataset.field;
+      $$("label", el).forEach(l => { l.onclick = () => { setField(field, l.dataset.val); paintSeg(el); }; });
+    }
+    function paintSeg(el) {
+      const v = String(curItem()[el.dataset.field]), type = el.dataset.type;
+      $$("label", el).forEach(l => {
+        l.classList.remove("sel-good", "sel-bad", "sel-plain", "sel-na");
+        if (l.dataset.val !== v) return;
+        if (v === "N/A") l.classList.add("sel-na");
+        else if (type === "yesno") l.classList.add(v === "No" ? "sel-good" : "sel-bad");
+        else if (type === "passfail") l.classList.add(v === "Pass" ? "sel-good" : "sel-bad");
+        else l.classList.add("sel-plain");
+      });
+    }
 
-/* ---- 驗證 ---- */
-function validate(){
-  const sc=SCREENS[state.screenIdx];
-  if(sc==="intro"){ if(!$("#consent").checked){ $("#consentErr").classList.remove("hidden"); return false; } state.consent=true; if(!state.startedAt) state.startedAt=new Date().toISOString(); return true; }
-  if(sc==="expert"){ if(!state.expert){ $("#expertErr").classList.remove("hidden"); return false; } state.rater={ name:$("#raterName").value, region:$("#raterRegion").value }; return true; }
-  if(sc==="item"){
-    const d=curItem(), miss=[];
-    REQUIRED.forEach(f=>{ if(d[f]==null||d[f]==="") miss.push(f); });
-    const q4=["Q4_entity_TP","Q4_entity_FP","Q4_entity_FN"];
-    if(d.Q4_entity_TP!=="N/A"){ if(q4.some(f=>d[f]==null||d[f]==="")) miss.push("Q4"); }
-    if(miss.length){ $("#itemErr").classList.remove("hidden"); return false; }
-    return true;
-  }
-  return true;
-}
+    /* ---- 繪製單筆 ---- */
+    function renderItem() {
+      const m = curMeta(), d = curItem();
+      $("#itemPill").textContent = `項目 ${state.itemIdx + 1} / ${visCount()}`;
+      $("#itemTitle").textContent = `評估項目（編號 ${m.item_id}）`;
+      $("#itemMeta").innerHTML = `來源 <b>${esc(m.source || "—")}</b> · feed <b>${esc(m.feed || "—")}</b>` + (m.link ? ` · <a href="${esc(m.link)}" target="_blank" rel="noopener">原文連結 ↗</a>` : "");
+      renderOriginal(m);
+      setSrc("#srcTranslation", "#srcTranslationText", m.system_translation, "系統繁體中文翻譯");
+      setSrc("#srcSummary", "#srcSummaryText", m.system_summary, "系統摘要");
+      setSrc("#srcTags", "#srcTagsText", m.system_tags, "系統實體／關鍵詞（system_tags）");
+      $$(".scale").forEach(el => { buildScale(el); paintScale(el); });
+      $$(".seg").forEach(el => { buildSeg(el); paintSeg(el); });
+      // Q4
+      const q4na = $("#q4na"); q4na.checked = (d.Q4_entity_TP === "N/A");
+      $$('input[data-entity]').forEach(inp => { const f = inp.dataset.entity; inp.value = (d[f] != null && d[f] !== "N/A") ? d[f] : ""; inp.disabled = q4na.checked; inp.oninput = () => { const n = inp.value === "" ? null : parseInt(inp.value, 10); setField(f, (n == null || isNaN(n)) ? null : n); }; });
+      q4na.onchange = () => { const on = q4na.checked;["Q4_entity_TP", "Q4_entity_FP", "Q4_entity_FN"].forEach(f => setField(f, on ? "N/A" : null)); $$('input[data-entity]').forEach(i => { i.disabled = on; if (on) i.value = ""; }); };
+      // Notes
+      const ta = $('textarea[data-field="Notes"]'); ta.value = d.Notes || ""; ta.oninput = () => setField("Notes", ta.value);
+      $("#timerVal").textContent = Math.round(d._acc || 0);
+      startTimer();
+    }
+    function renderOriginal(m) {
+      const el = $("#srcOriginal"), t = $("#srcOriginalText");
+      el.querySelector(".role").textContent = "原文（來源語言）";
+      const oc = (m.original_content == null ? "" : String(m.original_content)).trim();
+      if (oc) { t.textContent = oc; el.classList.remove("empty"); return; }
+      el.classList.add("empty");
+      if (m.link) {
+        t.innerHTML = '本筆未隨 feed 提供全文內容。請<a href="' + esc(m.link) + '" target="_blank" rel="noopener"><b>點選原文連結開啟原文 ↗</b></a>，閱讀原文後再進行各維度判定。<br>（若開啟連結後仍不足以判斷某維度，該維度再選 N/A。）';
+      } else {
+        t.textContent = "（原文內容缺失，且無原文連結 — 無法判斷的維度請選 N/A）";
+      }
+    }
+    function setSrc(box, txt, content, role, emptyMsg) {
+      const el = $(box), t = $(txt); const c = (content == null ? "" : String(content)).trim();
+      el.querySelector(".role").textContent = role;
+      if (c) { t.textContent = c; el.classList.remove("empty"); }
+      else { t.textContent = emptyMsg || "（無內容）"; el.classList.add("empty"); }
+    }
+    function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
 
-/* ---- 導覽 ---- */
-function go(dir){
-  const sc=SCREENS[state.screenIdx];
-  if(dir>0 && !validate()) return;
-  if(sc==="item") stopTimer();
-  if(sc==="item"){
-    if(dir>0){ if(state.itemIdx<visCount()-1){ state.itemIdx++; save(); return showItem(); } else state.screenIdx++; }
-    else { if(state.itemIdx>0){ state.itemIdx--; save(); return showItem(); } else state.screenIdx--; }
-  } else { state.screenIdx+=dir; if(SCREENS[state.screenIdx]==="item"){ save(); return showItem(); } }
-  state.screenIdx=Math.max(0,Math.min(SCREENS.length-1,state.screenIdx));
-  save(); render();
-}
-function showItem(){ state.screenIdx=SCREENS.indexOf("item"); render(); }
+    /* ---- 驗證 ---- */
+    function validate() {
+      const sc = SCREENS[state.screenIdx];
+      if (sc === "intro") { if (!$("#consent").checked) { $("#consentErr").classList.remove("hidden"); return false; } state.consent = true; if (!state.startedAt) state.startedAt = new Date().toISOString(); return true; }
+      if (sc === "expert") { if (!state.expert) { $("#expertErr").classList.remove("hidden"); return false; } state.rater = { name: $("#raterName").value, region: $("#raterRegion").value }; return true; }
+      if (sc === "item") {
+        const d = curItem(), miss = [];
+        REQUIRED.forEach(f => { if (d[f] == null || d[f] === "") miss.push(f); });
+        const q4 = ["Q4_entity_TP", "Q4_entity_FP", "Q4_entity_FN"];
+        if (d.Q4_entity_TP !== "N/A") { if (q4.some(f => d[f] == null || d[f] === "")) miss.push("Q4"); }
+        if (miss.length) { $("#itemErr").classList.remove("hidden"); return false; }
+        return true;
+      }
+      return true;
+    }
 
-/* ---- 主繪製 ---- */
-function render(){
-  const sc=SCREENS[state.screenIdx];
-  $$(".screen").forEach(s=>s.classList.toggle("hidden", s.dataset.screen!==sc));
-  $("#whoTag").textContent = state.expert ? (EXPERT_LANG[state.expert]+"（評分者 "+state.expert+"）") : "";
-  $("#introCount").textContent = state.order ? visCount() : "4–8";
-  if(sc==="item") renderItem();
-  if(sc==="done"){ renderReview(); onDoneScreen(); }
-  if(sc==="intro") $("#consent").checked=!!state.consent;
-  if(sc==="expert"){ paintExpert(); $("#raterName").value=state.rater.name||""; $("#raterRegion").value=state.rater.region||""; }
-  $("#backBtn").style.visibility=(state.screenIdx===0)?"hidden":"visible";
-  $("#nextBtn").style.visibility=(sc==="done")?"hidden":"visible";
-  $("#nextBtn").textContent=(sc==="item"&&state.itemIdx===visCount()-1)?"完成 →":"繼續 →";
-  let total=SCREENS.length-1+Math.max(0,visCount()-1);
-  let done=state.screenIdx+((sc==="item"||sc==="done")?state.itemIdx:0); if(sc==="done") done=total;
-  const pct=total?Math.round(100*done/total):0;
-  $("#pbar").style.width=pct+"%"; $("#ppct").textContent=pct+"%";
-  window.scrollTo(0,0);
-  ["#consentErr","#expertErr","#itemErr"].forEach(id=>$(id)&&$(id).classList.add("hidden"));
-}
-function paintExpert(){ $$("#expertPick label").forEach(l=>{ const on=l.dataset.val===state.expert; l.classList.toggle("sel", on); const r=l.querySelector("input"); if(r) r.checked=on; }); }
+    /* ---- 導覽 ---- */
+    function go(dir) {
+      const sc = SCREENS[state.screenIdx];
+      if (dir > 0 && !validate()) return;
+      if (sc === "item") stopTimer();
+      if (sc === "item") {
+        if (dir > 0) { if (state.itemIdx < visCount() - 1) { state.itemIdx++; save(); return showItem(); } else state.screenIdx++; }
+        else { if (state.itemIdx > 0) { state.itemIdx--; save(); return showItem(); } else state.screenIdx--; }
+      } else { state.screenIdx += dir; if (SCREENS[state.screenIdx] === "item") { save(); return showItem(); } }
+      state.screenIdx = Math.max(0, Math.min(SCREENS.length - 1, state.screenIdx));
+      save(); render();
+    }
+    function showItem() { state.screenIdx = SCREENS.indexOf("item"); render(); }
 
-/* ---- 匯出／送出 ---- */
-function flatRows(){
-  return state.order.map(mi=>{
-    const m=ITEMS[mi], d=state.items[m.item_id]||{};
-    const g=f=>{ const v=d[f]; return v==null?"":v; };
-    return {
-      submittedAt:"", expert_id:state.expert, rater_name:state.rater.name||"", region:state.rater.region||"",
-      item_id:m.item_id,
-      Q1_translation_adequacy:g("Q1_translation_adequacy"), Q2_summ_faithfulness:g("Q2_summ_faithfulness"),
-      Q3_hallucination:g("Q3_hallucination"), Q4_entity_TP:g("Q4_entity_TP"), Q4_entity_FP:g("Q4_entity_FP"),
-      Q4_entity_FN:g("Q4_entity_FN"), Q5_document_type:g("Q5_document_type"), Q6_actionability:g("Q6_actionability"),
-      Q7_format_compliance:g("Q7_format_compliance"), Q8_overall_usefulness:g("Q8_overall_usefulness"),
-      Notes:(d.Notes||"").replace(/\r?\n/g," "), seconds_spent:g("seconds_spent")
-    };
-  });
-}
-function payload(){ return { meta:SURVEY_META, expert_id:state.expert, rater:state.rater, startedAt:state.startedAt, submittedAt:new Date().toISOString(), responses:flatRows() }; }
-function exportData(fmt){
-  const rows=flatRows(); let blob,name;
-  const tag=(state.expert||"X");
-  if(fmt==="json"){ blob=new Blob([JSON.stringify(payload(),null,2)],{type:"application/json"}); name=`expert_${tag}_eval.json`; }
-  else { const cols=Object.keys(rows[0]); const e=v=>`"${String(v).replace(/"/g,'""')}"`;
-    const csv=[cols.join(","),...rows.map(r=>cols.map(c=>e(r[c])).join(","))].join("\r\n");
-    blob=new Blob(["﻿"+csv],{type:"text/csv;charset=utf-8"}); name=`expert_${tag}_eval.csv`; }
-  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; a.click();
-}
-/* 進入完成頁時自動送出（避免使用者忘了按「送出」就關頁面 → 後台收不到） */
-let submitting=false;
-function onDoneScreen(){
-  if(!CONFIG.submitEndpoint){ $("#doneTitle").textContent="已完成填寫"; $("#doneLead").textContent="（系統設定異常：後台端點未設定，請通知研究團隊。）"; $("#submitBtn").textContent="送出評分（未設定後台）"; return; }
-  if(state.submitted){ showSubmitted(); return; }
-  if(!submitting) submitData();
-}
-function showSubmitted(){
-  $("#submitErr").classList.add("hidden");
-  $("#doneTitle").textContent="✓ 已送出，感謝您！";
-  $("#doneLead").textContent="您的評分已成功送出，可直接關閉本頁。";
-  $("#submitOk").classList.remove("hidden");
-  const btn=$("#submitBtn"); btn.disabled=false; btn.textContent="重新送出（已送出）";
-}
-async function submitData(){
-  $("#submitErr").classList.add("hidden"); $("#submitOk").classList.add("hidden");
-  if(!CONFIG.submitEndpoint){ $("#submitErr").textContent="尚未設定後台端點（CONFIG.submitEndpoint）。請改用下載並回傳檔案。"; $("#submitErr").classList.remove("hidden"); return; }
-  submitting=true;
-  const btn=$("#submitBtn"); btn.disabled=true; btn.textContent="送出中…";
-  $("#doneTitle").textContent="正在送出您的評分…";
-  try{
-    // keepalive：即使使用者送出後立刻關閉分頁，請求仍會送達
-    await fetch(CONFIG.submitEndpoint,{ method:"POST", mode:"no-cors", keepalive:true, headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify(payload()) });
-    state.submitted=true; save();
-    showSubmitted();
-  }catch(e){
-    $("#doneTitle").textContent="送出未完成";
-    $("#doneLead").textContent="請按「重新送出」再試一次；若仍失敗，可能是您的網路或防火牆阻擋了 Google（script.google.com），請換網路或通知研究團隊。";
-    $("#submitErr").textContent="送出失敗："+e.message;
-    $("#submitErr").classList.remove("hidden");
-    btn.disabled=false; btn.textContent="重新送出";
-  } finally { submitting=false; }
-}
-function renderReview(){
-  if(!CONFIG.submitEndpoint) $("#submitBtn").textContent="送出評分（未設定後台）";
-  const rows=flatRows();
-  let h='<table class="review"><tr><th>編號</th><th>Q1</th><th>Q2</th><th>Q3</th><th>TP</th><th>FP</th><th>FN</th><th>Q5</th><th>Q6</th><th>Q7</th><th>Q8</th><th>秒</th></tr>';
-  rows.forEach(r=>{ h+=`<tr><td><code>${r.item_id}</code></td><td>${r.Q1_translation_adequacy}</td><td>${r.Q2_summ_faithfulness}</td><td>${r.Q3_hallucination}</td><td>${r.Q4_entity_TP}</td><td>${r.Q4_entity_FP}</td><td>${r.Q4_entity_FN}</td><td>${r.Q5_document_type}</td><td>${r.Q6_actionability}</td><td>${r.Q7_format_compliance}</td><td>${r.Q8_overall_usefulness}</td><td>${r.seconds_spent}</td></tr>`; });
-  h+="</table>"; $("#reviewTable").innerHTML=h;
-}
+    /* ---- 主繪製 ---- */
+    function render() {
+      const sc = SCREENS[state.screenIdx];
+      $$(".screen").forEach(s => s.classList.toggle("hidden", s.dataset.screen !== sc));
+      $("#whoTag").textContent = state.expert ? (EXPERT_LANG[state.expert] + "（評分者 " + state.expert + "）") : "";
+      $("#introCount").textContent = state.order ? visCount() : "4–8";
+      if (sc === "item") renderItem();
+      if (sc === "done") { renderReview(); onDoneScreen(); }
+      if (sc === "intro") $("#consent").checked = !!state.consent;
+      if (sc === "expert") { paintExpert(); $("#raterName").value = state.rater.name || ""; $("#raterRegion").value = state.rater.region || ""; }
+      $("#backBtn").style.visibility = (state.screenIdx === 0) ? "hidden" : "visible";
+      $("#nextBtn").style.visibility = (sc === "done") ? "hidden" : "visible";
+      $("#nextBtn").textContent = (sc === "item" && state.itemIdx === visCount() - 1) ? "完成 →" : "繼續 →";
+      let total = SCREENS.length - 1 + Math.max(0, visCount() - 1);
+      let done = state.screenIdx + ((sc === "item" || sc === "done") ? state.itemIdx : 0); if (sc === "done") done = total;
+      const pct = total ? Math.round(100 * done / total) : 0;
+      $("#pbar").style.width = pct + "%"; $("#ppct").textContent = pct + "%";
+      window.scrollTo(0, 0);
+      ["#consentErr", "#expertErr", "#itemErr"].forEach(id => $(id) && $(id).classList.add("hidden"));
+    }
+    function paintExpert() { $$("#expertPick label").forEach(l => { const on = l.dataset.val === state.expert; l.classList.toggle("sel", on); const r = l.querySelector("input"); if (r) r.checked = on; }); }
 
-/* ---- 偵測本機「已填但未送出」的紀錄，提供一鍵補送 ---- */
-function findUnsubmitted(){
-  const out=[];
-  for(let i=0;i<localStorage.length;i++){
-    const k=localStorage.key(i);
-    if(!/^patent_expert_eval_(A|B)_/.test(k)) continue;
-    try{
-      const s=JSON.parse(localStorage.getItem(k));
-      if(!s||!s.expert||s.submitted) continue;
-      const items=s.items||{};
-      const answered=Object.keys(items).some(id=>Object.keys(items[id]||{}).some(f=>/^Q[1-8]/.test(f)&&items[id][f]!=null&&items[id][f]!==""));
-      if(answered) out.push(s);
-    }catch(e){}
-  }
-  return out;
-}
-function showResumePrompt(){
-  const found=findUnsubmitted();
-  if(!found.length) return;
-  const s=found[0];
-  const lang=EXPERT_LANG[s.expert]||s.expert;
-  const n=Object.keys(s.items||{}).length;
-  $("#resumeInfo").textContent=`${lang}，已填約 ${n} 題`;
-  $("#resumeBox").classList.remove("hidden");
-  $("#resumeBtn").onclick=()=>{
-    Object.assign(state,s);
-    state.consent=true; state.submitted=false;
-    ensureOrder();
-    state.screenIdx=SCREENS.indexOf("done");
-    render();   // 進入完成頁 → onDoneScreen() 自動送出
-  };
-}
+    /* ---- 匯出／送出 ---- */
+    function flatRows() {
+      return state.order.map(mi => {
+        const m = ITEMS[mi], d = state.items[m.item_id] || {};
+        const g = f => { const v = d[f]; return v == null ? "" : v; };
+        return {
+          submittedAt: "", expert_id: state.expert, rater_name: state.rater.name || "", region: state.rater.region || "",
+          item_id: m.item_id,
+          Q1_translation_adequacy: g("Q1_translation_adequacy"), Q2_summ_faithfulness: g("Q2_summ_faithfulness"),
+          Q3_hallucination: g("Q3_hallucination"), Q4_entity_TP: g("Q4_entity_TP"), Q4_entity_FP: g("Q4_entity_FP"),
+          Q4_entity_FN: g("Q4_entity_FN"), Q5_document_type: g("Q5_document_type"), Q6_actionability: g("Q6_actionability"),
+          Q7_format_compliance: g("Q7_format_compliance"), Q8_overall_usefulness: g("Q8_overall_usefulness"),
+          Notes: (d.Notes || "").replace(/\r?\n/g, " "), seconds_spent: g("seconds_spent")
+        };
+      });
+    }
+    function payload() { return { meta: SURVEY_META, expert_id: state.expert, rater: state.rater, startedAt: state.startedAt, submittedAt: new Date().toISOString(), responses: flatRows() }; }
+    function exportData(fmt) {
+      const rows = flatRows(); let blob, name;
+      const tag = (state.expert || "X");
+      if (fmt === "json") { blob = new Blob([JSON.stringify(payload(), null, 2)], { type: "application/json" }); name = `expert_${tag}_eval.json`; }
+      else {
+        const cols = Object.keys(rows[0]); const e = v => `"${String(v).replace(/"/g, '""')}"`;
+        const csv = [cols.join(","), ...rows.map(r => cols.map(c => e(r[c])).join(","))].join("\r\n");
+        blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" }); name = `expert_${tag}_eval.csv`;
+      }
+      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; a.click();
+    }
+    /* 進入完成頁時自動送出（避免使用者忘了按「送出」就關頁面 → 後台收不到） */
+    let submitting = false;
+    function onDoneScreen() {
+      if (!CONFIG.submitEndpoint) { $("#doneTitle").textContent = "已完成填寫"; $("#doneLead").textContent = "（系統設定異常：後台端點未設定，請通知研究團隊。）"; $("#submitBtn").textContent = "送出評分（未設定後台）"; return; }
+      if (state.submitted) { showSubmitted(); return; }
+      if (!submitting) submitData();
+    }
+    function showSubmitted() {
+      $("#submitErr").classList.add("hidden");
+      $("#doneTitle").textContent = "✓ 已送出，感謝您！";
+      $("#doneLead").textContent = "您的評分已成功送出，可直接關閉本頁。";
+      $("#submitOk").classList.remove("hidden");
+      const btn = $("#submitBtn"); btn.disabled = false; btn.textContent = "重新送出（已送出）";
+    }
+    async function submitData() {
+      $("#submitErr").classList.add("hidden"); $("#submitOk").classList.add("hidden");
+      if (!CONFIG.submitEndpoint) { $("#submitErr").textContent = "尚未設定後台端點（CONFIG.submitEndpoint）。請改用下載並回傳檔案。"; $("#submitErr").classList.remove("hidden"); return; }
+      submitting = true;
+      const btn = $("#submitBtn"); btn.disabled = true; btn.textContent = "送出中…";
+      $("#doneTitle").textContent = "正在送出您的評分…";
+      try {
+        // keepalive：即使使用者送出後立刻關閉分頁，請求仍會送達
+        await fetch(CONFIG.submitEndpoint, { method: "POST", mode: "no-cors", keepalive: true, headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload()) });
+        state.submitted = true; save();
+        showSubmitted();
+      } catch (e) {
+        $("#doneTitle").textContent = "送出未完成";
+        $("#doneLead").textContent = "請按「重新送出」再試一次；若仍失敗，可能是您的網路或防火牆阻擋了 Google（script.google.com），請換網路或通知研究團隊。";
+        $("#submitErr").textContent = "送出失敗：" + e.message;
+        $("#submitErr").classList.remove("hidden");
+        btn.disabled = false; btn.textContent = "重新送出";
+      } finally { submitting = false; }
+    }
+    function renderReview() {
+      if (!CONFIG.submitEndpoint) $("#submitBtn").textContent = "送出評分（未設定後台）";
+      const rows = flatRows();
+      let h = '<table class="review"><tr><th>編號</th><th>Q1</th><th>Q2</th><th>Q3</th><th>TP</th><th>FP</th><th>FN</th><th>Q5</th><th>Q6</th><th>Q7</th><th>Q8</th><th>秒</th></tr>';
+      rows.forEach(r => { h += `<tr><td><code>${r.item_id}</code></td><td>${r.Q1_translation_adequacy}</td><td>${r.Q2_summ_faithfulness}</td><td>${r.Q3_hallucination}</td><td>${r.Q4_entity_TP}</td><td>${r.Q4_entity_FP}</td><td>${r.Q4_entity_FN}</td><td>${r.Q5_document_type}</td><td>${r.Q6_actionability}</td><td>${r.Q7_format_compliance}</td><td>${r.Q8_overall_usefulness}</td><td>${r.seconds_spent}</td></tr>`; });
+      h += "</table>"; $("#reviewTable").innerHTML = h;
+    }
 
-/* ---- 啟動 ---- */
-(function init(){
-  if(!ITEMS.length){ document.querySelector("main").innerHTML='<div class="card"><h2>尚未載入題目</h2><p>找不到 <code>items.js</code> 或其為空。請先在 <code>專家評估/</code> 執行 <code>python export_items.py</code> 產生題目。</p></div>'; return; }
-  render();
-  showResumePrompt();
-  $("#consent").addEventListener("change",e=>{ state.consent=e.target.checked; save(); });
-  // 評分者選擇：以原生 radio 的 change 為主（touch 裝置最可靠），label 點擊為輔
-  $$('#expertPick input[type=radio]').forEach(r=>r.addEventListener("change",()=>pickExpert(r.value)));
-  $$('#expertPick label').forEach(l=>l.addEventListener("click",()=>{ const r=l.querySelector("input"); if(r&&!r.checked){ r.checked=true; pickExpert(l.dataset.val); } }));
-  window.addEventListener("beforeunload",()=>{ if(SCREENS[state.screenIdx]==="item") stopTimer(); save(); });
-})();
-</script>
+    /* ---- 偵測本機「已填但未送出」的紀錄，提供一鍵補送 ---- */
+    function findUnsubmitted() {
+      const out = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (!/^patent_expert_eval_(A|B)_/.test(k)) continue;
+        try {
+          const s = JSON.parse(localStorage.getItem(k));
+          if (!s || !s.expert || s.submitted) continue;
+          const items = s.items || {};
+          const answered = Object.keys(items).some(id => Object.keys(items[id] || {}).some(f => /^Q[1-8]/.test(f) && items[id][f] != null && items[id][f] !== ""));
+          if (answered) out.push(s);
+        } catch (e) { }
+      }
+      return out;
+    }
+    function showResumePrompt() {
+      const found = findUnsubmitted();
+      if (!found.length) return;
+      const s = found[0];
+      const lang = EXPERT_LANG[s.expert] || s.expert;
+      const n = Object.keys(s.items || {}).length;
+      $("#resumeInfo").textContent = `${lang}，已填約 ${n} 題`;
+      $("#resumeBox").classList.remove("hidden");
+      $("#resumeBtn").onclick = () => {
+        Object.assign(state, s);
+        state.consent = true; state.submitted = false;
+        ensureOrder();
+        state.screenIdx = SCREENS.indexOf("done");
+        render();   // 進入完成頁 → onDoneScreen() 自動送出
+      };
+    }
+
+    /* ---- 啟動 ---- */
+    (function init() {
+      if (!ITEMS.length) { document.querySelector("main").innerHTML = '<div class="card"><h2>尚未載入題目</h2><p>找不到 <code>items.js</code> 或其為空。請先在 <code>專家評估/</code> 執行 <code>python export_items.py</code> 產生題目。</p></div>'; return; }
+      render();
+      showResumePrompt();
+      $("#consent").addEventListener("change", e => { state.consent = e.target.checked; save(); });
+      // 評分者選擇：以原生 radio 的 change 為主（touch 裝置最可靠），label 點擊為輔
+      $$('#expertPick input[type=radio]').forEach(r => r.addEventListener("change", () => pickExpert(r.value)));
+      $$('#expertPick label').forEach(l => l.addEventListener("click", () => { const r = l.querySelector("input"); if (r && !r.checked) { r.checked = true; pickExpert(l.dataset.val); } }));
+      window.addEventListener("beforeunload", () => { if (SCREENS[state.screenIdx] === "item") stopTimer(); save(); });
+    })();
+  </script>
 </body>
+
 </html>
