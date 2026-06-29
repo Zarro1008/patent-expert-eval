@@ -3,16 +3,6 @@
 // Blind-eval: AI's Document type / Actionability are intentionally omitted.
 window.ITEMS = [
   {
-    "item_id": 1,
-    "source": "WIPO",
-    "feed": "IP Advantage",
-    "original_content": "",
-    "system_translation": "越南長期以重組乳品影響乳製品消費，2000年代後期依賴進口乳製品，新鮮牛奶供應有限。TH Milk Food Joint Stock Company於2009年成立，致力於提供越南家庭可信賴且本土生產的新鮮乳製品。透過現代化農業、閉環生產及完整的農場到餐桌可追溯系統，公司創立了全新國內乳業標準，專注於新鮮度、品質與透明度，促使消費者期望改變並樹立永續乳業模式。2010年推出的“TH true MILK”鮮奶產品全採自公司高科技牧場的原奶，確保可追溯性與一致品質，成功扭轉越南消費者從重組乳品轉向本土新鮮乳製品認知，並透過商標及智慧財產權策略奠定品牌保護與國際擴張基礎。TH創辦人泰香女士認知改造乳業潛力，以誠信與高標準品質推動鮮奶，帶動人均乳品消費量由8公升增至逾三倍。公司引進高科技大型乳業農場，監測牛隻健康，並實行碳中和與動物福利標準。TH秉持一致品質，取得多項國際食品安全與永續認證，並與IPMax律師事務所合作，廣泛註冊商標及建立全面智慧財產權組合。TH利用WIPO「Madrid System」方便在73國申請16項國際商標，助力國際擴展與市場同步保護。2019年獲得向中國出口鮮奶的首個出口碼，隨後於廣州設立分公司，直接服務消費者。TH不僅銷售產品，更以文化大使身分推廣越南永續農業與創新。未來將擴展健康永續產品線，堅持自然原則，透過智慧財產權實現規模擴張與全球競爭力。TH的成功展示創新、永續與品牌保護可同步發展，在Madrid System支持下，這個越南乳業品牌準備踏向全球化且堅韌的下一階段。",
-    "system_summary": "該新聞報導TH公司將智慧財產權策略作為國際擴張核心，並利用WIPO Madrid System簡化商標多國申請流程，提升擴展效率與法律保護同步，轉變越南乳製品產業國際競爭佈局。",
-    "system_tags": "[\"智慧財產權\",\"乳製品\",\"越南\",\"國際商標\",\"永續農業\"]",
-    "link": "https://www.wipo.int/en/web/ip-advantage/w/stories/th-true-milk"
-  },
-  {
     "item_id": 2,
     "source": "WIPO",
     "feed": "Publication",
@@ -23,16 +13,6 @@ window.ITEMS = [
     "link": "https://www.wipo.int/publications/en/details.jsp?id=4829"
   },
   {
-    "item_id": 3,
-    "source": "WIPO",
-    "feed": "office-japan",
-    "original_content": "",
-    "system_translation": "世界智慧財產權組織 (WIPO) 宣布 WIPO 全球獎 2026 現已開放申請，旨在表彰並獎勵在創新和創意領域取得傑出成就的新創公司與中小企業。此獎項的目標是提高這些企業在全球智慧財產權體系中的可見度，並推動其持續成長與發展。申請者需證明其在智慧財產權的運用、創新能力及對社會經濟的貢獻。WIPO 提供此平台，期望能為全球的創新者提供更多機會，鼓勵更多企業投入研發，利用智慧財產權保護其創新成果，並藉此加速全球經濟的進步。",
-    "system_summary": "此獎項的設立與推廣，可能鼓勵更多台灣的新創公司與中小企業積極運用智慧財產權，提升其國際競爭力，並促進台灣創新創業生態系的發展。",
-    "system_tags": "WIPO;全球獎;新創公司;中小企業;智慧財產權",
-    "link": "https://www.wipo.int/en/web/office-japan/w/news/2026/apply-now-wipo-global-awards-2026-open-for-innovative-and-creative-startups-and-smes-worldwide"
-  },
-  {
     "item_id": 4,
     "source": "MOIP",
     "feed": "MOIP_News",
@@ -41,26 +21,6 @@ window.ITEMS = [
     "system_summary": "此跨部會合作體系旨在保護K-化妝品品牌價值與出口競爭力，對欲進軍韓國市場的台灣美妝產業，以及在國際上與韓國品牌競爭的業者，應留意其在智慧財產權保護與防偽措施上的動態，以應對市場變化。",
     "system_tags": "K-化妝品;仿冒品;智慧財產權;官民合作;韓國",
     "link": "https://www.moip.go.kr/ko/kpoBultnDetail.do?menuCd=SCD0200609&ntatcSeq=19670&aprchId=BUT0000020&sysCd=SCD02"
-  },
-  {
-    "item_id": 5,
-    "source": "WIPO",
-    "feed": "IP Advantage",
-    "original_content": "",
-    "system_translation": "摩洛哥發明家索凱娜·布杜杜赫博士 (Dr. Soukaina Boudoudouh) 在研究大型能源儲存方案時，發現電池壽命預估不準確的問題，這可能導致再生能源專案的盈利能力受損。她因此開發了一種數位系統，能即時監測電池的電流、電壓、溫度等狀態，並透過特定演算法計算電池的狀態變數。此系統的儀表板能即時顯示電池的循環使用情況、剩餘循環次數及主要狀態指標。這項創新可整合到現有或新設計的應用中，有助於營運商優化專案管理、延長電池壽命，並改善財務預測。此外，該技術也能精確計算電動車電池的剩餘壽命與消耗循環，提升二手電動車市場的買家信心和車輛價值。布杜杜赫博士透過世界智慧財產權組織 (WIPO) 的發明人協助計畫 (IAP)，在摩洛哥工業和商業財產局 (OMPIC) 的支援下，由志工專利專家阿布德哈克·阿馬尼 (Abdelhaq Ammani) 協助，成功為其電池健康檢查器發明取得專利 (MA58892B1)。她強調 IAP 在專利撰寫，特別是權利要求 (claims) 擬定方面的協助，對有效保護發明至關重要。目前她正尋求合作夥伴以將產品推向市場，並持續進行研發。",
-    "system_summary": "此發明能精確監測電池健康，有望延長再生能源儲能系統與電動車電池壽命，降低運營成本，並提升二手電動車的市場價值與消費者信心。世界智慧財產權組織 (WIPO) 發明人協助計畫 (IAP) 的支援模式，亦為獨立發明家將創新商業化提供了重要路徑。",
-    "system_tags": "電池健康管理;專利申請;WIPO IAP;再生能源;電動車",
-    "link": "https://www.wipo.int/en/web/ip-advantage/w/stories/iap-supported-moroccan-inventor-in-patenting-battery-health-checker"
-  },
-  {
-    "item_id": 6,
-    "source": "WIPO",
-    "feed": "IP and Economics",
-    "original_content": "",
-    "system_translation": "世界智慧財產權組織 (WIPO) 將於2026年2月17日發布《2026年世界智慧財產權報告》，主題為「創新擴散」。報告將探討創新如何在經濟體之間傳播，以及科技採用的關鍵促進因素，並基於原創分析和案例研究。今年的報告將深入探討新技術如何擴散至全球及在國家內部傳播，重點關注政策制定者如何透過識別促進技術擴散的因素，來支持技術的普及，從而使國家更廣泛地參與創新驅動的成長。發布活動將於2026年2月17日（歐洲中部時間）下午2點至3點30分，在瑞士日內瓦WIPO總部的WIPO會議廳舉行，並同步線上直播。活動包括報告重點發現的介紹，以及一場由高階講者參與的專題討論，探討成功的技術擴散要素。WIPO智慧財產權與創新生態系統部門助理總幹事Marco M. Alemán先生將致開幕詞。活動將以英語進行，並提供阿拉伯語、中文、法語、俄語和西班牙語的同步口譯。WIPO的《世界智慧財產權報告》每兩年發布一次，為市場經濟中的創新作用提供新見解，藉此促進基於證據的政策制定。",
-    "system_summary": "此報告預計將為各國在推動技術採納和創新驅動成長方面提供政策制定上的新見解與實證基礎。",
-    "system_tags": "世界智慧財產權報告;創新擴散;科技採用;WIPO;政策制定",
-    "link": "https://www.wipo.int/en/web/economics/w/news/2026/save-the-date-february-17-2026-release-of-the-world-intellectual-property-report-2026"
   },
   {
     "item_id": 7,
@@ -111,16 +71,6 @@ window.ITEMS = [
     "system_summary": "本次維護將影響商標圖像及文件的存取，部分商標相關系統將暫時無法使用，對依賴這些系統進行商標申請、查詢或文件的使用者可能造成短暫不便。",
     "system_tags": "USPTO;商標系統;系統維護;TEAS;TSDR",
     "link": "https://www.uspto.gov/system-status/20260123-trademark-system-maintenance"
-  },
-  {
-    "item_id": 12,
-    "source": "WIPO",
-    "feed": "IP Advantage",
-    "original_content": "",
-    "system_translation": "WeedGreen 是源自哥倫比亞卡利的一個大麻文化啟發的時尚品牌，由 Antonio Correa 創立。該品牌誕生於挑戰大麻負面標籤，並透過設計重新詮釋其文化意涵。靈感來自洛杉磯的時尚潮流，WeedGreen 融合文化身份與創新創意。起初在哥倫比亞擁有小眾群體，逐漸發展成擁有國際追隨者的生活風格品牌，主張表達自由、永續及文化再造。品牌創辦人 Antonio 有紡織背景，受美國洛杉磯結合大麻文化與時尚的啟發，回國創立 WeedGreen，強調大麻象徵轉化與韌性的正向意涵。在品牌成長過程中，為保障國際發展，採取註冊商標策略，透過 Luna Leal Abogados 在美國、歐盟及墨西哥獲得商標保護，支援跨境電商、授權及快閃活動。商標不僅保護品牌名稱，更維護自由、永續與藝術表達的核心理念。品牌視覺融合都市簡約及自然元素，並巧妙避免含蓄或爭議性內容以符合法規。隨著商標保障到位，WeedGreen 正向全球擴張，開發生活風格產品並與藝術及永續創作者跨界合作。國際商標保護讓品牌具備法律基礎，自信展開全球合作和市場探索，提升專業度並簡化合作溝通。未來計畫包含開拓新市場與文化領域的合作，並持續以強健的智慧財產權策略支撐創新發展。WeedGreen 的經驗展示文化、設計與法律保護如何結合，為具有全球視野之創業者提供寶貴啟示：從一開始即思考國際化，文化敏感與法律精準為必要，商標權是創新的動力，選擇理解品牌願景的夥伴至關重要。品牌堅持「植根文化，以策略保護」的原則，以法律策略為基石，成就一個充滿韌性且具話語權的全球時尚品牌。",
-    "system_summary": "WeedGreen 透過國際商標保護建立法律基礎，實現跨境品牌擴張與市場拓展，顯著提升了品牌的國際競爭力與合作機會。",
-    "system_tags": "[\"智财产业\",\"商標保護\",\"時尚品牌\",\"國際擴張\"]",
-    "link": "https://www.wipo.int/en/web/ip-advantage/w/stories/weedgreen-streetwear-colombia"
   },
   {
     "item_id": 13,

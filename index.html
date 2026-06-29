@@ -124,11 +124,11 @@
   <!-- ===== 評分者身分 ===== -->
   <section class="card screen hidden" data-screen="expert">
     <span class="pill">身分 · 第 2 步</span>
-    <h2>您是哪一位評分者？</h2>
-    <p class="lead">本 pilot 由兩位專家獨立評分。請選擇您被指派的代號（題序將依此各自隨機化）。</p>
+    <h2>您負責評估哪一種翻譯語言？</h2>
+    <p class="lead">本 pilot 由兩位專家獨立評分，依負責的翻譯語言區分。請選擇您被指派的語言（題序將依此各自隨機化）。</p>
     <div class="expert-pick" id="expertPick">
-      <label data-val="A">評分者 A<br><span style="font-weight:400;font-size:12px;color:var(--muted)">Expert_A</span></label>
-      <label data-val="B">評分者 B<br><span style="font-weight:400;font-size:12px;color:var(--muted)">Expert_B</span></label>
+      <label data-val="A">英文<br><span style="font-weight:400;font-size:12px;color:var(--muted)">English（評分者 A）</span></label>
+      <label data-val="B">英文／韓文<br><span style="font-weight:400;font-size:12px;color:var(--muted)">English／Korean（評分者 B）</span></label>
     </div>
     <label class="q">姓名／代號 <span class="hint">選填，僅供研究團隊辨識，不公開</span></label>
     <input type="text" id="raterName" placeholder="例如：王小明 或 A1" />
@@ -138,7 +138,7 @@
       <option>台灣</option><option>中國大陸</option><option>香港／澳門</option><option>日本</option>
       <option>韓國</option><option>新加坡／東南亞</option><option>歐洲</option><option>北美</option><option>其他</option>
     </select>
-    <div class="err hidden" id="expertErr">請先選擇評分者 A 或 B。</div>
+    <div class="err hidden" id="expertErr">請先選擇您負責的翻譯語言（英文 或 英文／韓文）。</div>
   </section>
 
   <!-- ===== 單筆評估（動態） ===== -->
@@ -249,6 +249,7 @@ const CONFIG = { submitEndpoint: "https://script.google.com/macros/s/AKfycbyhAXS
 const SURVEY_META = { title: "多語專利情報系統輸出 — 人工專家 pilot 評估", version: "1.0", n_items: 13 };
 const ITEMS = (window.ITEMS || []);
 const SEED = { A: 101, B: 202 };
+const EXPERT_LANG = { A: "英文", B: "英文／韓文" };  // 評分者依負責的翻譯語言區分
 
 /* 必填欄位（與 Expert 表欄名一致） */
 const REQUIRED = ["Q1_translation_adequacy","Q2_summ_faithfulness","Q3_hallucination",
@@ -384,7 +385,7 @@ function showItem(){ state.screenIdx=SCREENS.indexOf("item"); render(); }
 function render(){
   const sc=SCREENS[state.screenIdx];
   $$(".screen").forEach(s=>s.classList.toggle("hidden", s.dataset.screen!==sc));
-  $("#whoTag").textContent = state.expert ? ("評分者 "+state.expert) : "";
+  $("#whoTag").textContent = state.expert ? (EXPERT_LANG[state.expert]+"（評分者 "+state.expert+"）") : "";
   $("#introCount").textContent=ITEMS.length;
   if(sc==="item") renderItem();
   if(sc==="done") renderReview();
