@@ -220,8 +220,8 @@
   <!-- ===== 完成 ===== -->
   <section class="card screen hidden" data-screen="done">
     <span class="pill">完成 · 第 3 步</span>
-    <h2 id="doneTitle">已完成所有 13 筆評分，感謝您！</h2>
-    <p class="lead" id="doneLead">請送出您的評分。系統會同時下載一份 JSON 備份；若後台未設定，請改用下載並回傳檔案給研究團隊。</p>
+    <h2 id="doneTitle">正在送出您的評分…</h2>
+    <p class="lead" id="doneLead">系統正在自動送出，請稍候，並保持本頁開啟直到看到「✓ 已送出」。系統會同時下載一份 JSON 備份。</p>
     <div class="footer-actions" style="position:static;border:0;padding:0;margin-bottom:10px;background:none">
       <button class="primary" id="submitBtn" onclick="submitData()">送出評分</button>
       <button class="ghost" onclick="exportData('json')">⬇ 下載 JSON</button>
@@ -406,7 +406,7 @@ function render(){
   $("#whoTag").textContent = state.expert ? (EXPERT_LANG[state.expert]+"（評分者 "+state.expert+"）") : "";
   $("#introCount").textContent = state.order ? visCount() : "4–8";
   if(sc==="item") renderItem();
-  if(sc==="done") renderReview();
+  if(sc==="done"){ renderReview(); onDoneScreen(); }
   if(sc==="intro") $("#consent").checked=!!state.consent;
   if(sc==="expert"){ paintExpert(); $("#raterName").value=state.rater.name||""; $("#raterRegion").value=state.rater.region||""; }
   $("#backBtn").style.visibility=(state.screenIdx===0)?"hidden":"visible";
@@ -447,15 +447,39 @@ function exportData(fmt){
     blob=new Blob(["﻿"+csv],{type:"text/csv;charset=utf-8"}); name=`expert_${tag}_eval.csv`; }
   const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; a.click();
 }
+/* 進入完成頁時自動送出（避免使用者忘了按「送出」就關頁面 → 後台收不到） */
+let submitting=false;
+function onDoneScreen(){
+  if(!CONFIG.submitEndpoint){ $("#doneTitle").textContent="已完成填寫"; $("#doneLead").textContent="後台未設定，請按下方「下載 JSON／CSV」並回傳檔案給研究團隊。"; $("#submitBtn").textContent="送出評分（未設定後台）"; return; }
+  if(state.submitted){ showSubmitted(); return; }
+  if(!submitting) submitData();
+}
+function showSubmitted(){
+  $("#submitErr").classList.add("hidden");
+  $("#doneTitle").textContent="✓ 已送出，感謝您！";
+  $("#doneLead").textContent="您的評分已送出，並已下載一份 JSON 備份。可關閉本頁。";
+  $("#submitOk").classList.remove("hidden");
+  const btn=$("#submitBtn"); btn.disabled=false; btn.textContent="重新送出（已送出）";
+}
 async function submitData(){
   $("#submitErr").classList.add("hidden"); $("#submitOk").classList.add("hidden");
   if(!CONFIG.submitEndpoint){ $("#submitErr").textContent="尚未設定後台端點（CONFIG.submitEndpoint）。請改用下載並回傳檔案。"; $("#submitErr").classList.remove("hidden"); return; }
+  submitting=true;
   const btn=$("#submitBtn"); btn.disabled=true; btn.textContent="送出中…";
+  $("#doneTitle").textContent="正在送出您的評分…";
   try{
-    await fetch(CONFIG.submitEndpoint,{ method:"POST", mode:"no-cors", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify(payload()) });
-    $("#submitOk").classList.remove("hidden"); exportData("json"); localStorage.removeItem(storageKey());
-  }catch(e){ $("#submitErr").textContent="送出失敗："+e.message+"。請改用下載並回傳檔案。"; $("#submitErr").classList.remove("hidden"); }
-  finally{ btn.disabled=false; btn.textContent="送出評分"; }
+    // keepalive：即使使用者送出後立刻關閉分頁，請求仍會送達
+    await fetch(CONFIG.submitEndpoint,{ method:"POST", mode:"no-cors", keepalive:true, headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify(payload()) });
+    state.submitted=true; save();
+    exportData("json");
+    showSubmitted();
+  }catch(e){
+    $("#doneTitle").textContent="送出未完成";
+    $("#doneLead").textContent="請按「重新送出」；若仍失敗，可能是網路或防火牆阻擋 script.google.com，請改用下載並回傳檔案。";
+    $("#submitErr").textContent="送出失敗："+e.message;
+    $("#submitErr").classList.remove("hidden");
+    btn.disabled=false; btn.textContent="重新送出";
+  } finally { submitting=false; }
 }
 function renderReview(){
   if(!CONFIG.submitEndpoint) $("#submitBtn").textContent="送出評分（未設定後台）";
