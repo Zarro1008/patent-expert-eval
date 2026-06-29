@@ -78,7 +78,10 @@
   .err{color:var(--bad);font-size:13px;margin-top:8px;font-weight:600}
   .ok-msg{color:var(--ok);font-size:14px;margin-top:8px;font-weight:600}
   .expert-pick{display:flex;gap:14px;margin:10px 0}
-  .expert-pick label{flex:1;border:2px solid var(--line);border-radius:10px;padding:16px;text-align:center;cursor:pointer;font-weight:700}
+  .expert-pick label{flex:1;display:flex;align-items:center;gap:10px;border:2px solid var(--line);border-radius:10px;padding:16px;cursor:pointer;font-weight:700;-webkit-tap-highlight-color:rgba(47,91,208,.15)}
+  .expert-pick label input{width:20px;height:20px;flex:0 0 auto;margin:0;accent-color:var(--accent)}
+  .expert-pick label .pick-text{display:flex;flex-direction:column;gap:2px;text-align:left}
+  .expert-pick label .pick-sub{font-weight:400;font-size:12px;color:var(--muted)}
   .expert-pick label.sel{border-color:var(--accent);background:var(--accent-weak);color:var(--accent)}
   .note-box{background:#fff8ec;border:1px solid #ffe2b0;border-radius:8px;padding:12px 14px;font-size:13.5px;color:#6b4e1e}
   table.review{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:10px;display:block;overflow-x:auto}
@@ -127,8 +130,8 @@
     <h2>您負責評估哪一種翻譯語言？</h2>
     <p class="lead">本 pilot 由兩位專家獨立評分，依負責的翻譯語言區分。請選擇您被指派的語言（題序將依此各自隨機化）。</p>
     <div class="expert-pick" id="expertPick">
-      <label data-val="A">英文<br><span style="font-weight:400;font-size:12px;color:var(--muted)">English（評分者 A）</span></label>
-      <label data-val="B">英文／韓文<br><span style="font-weight:400;font-size:12px;color:var(--muted)">English／Korean（評分者 B）</span></label>
+      <label data-val="A"><input type="radio" name="expertPickRadio" value="A"><span class="pick-text"><span>英文</span><span class="pick-sub">English（評分者 A）</span></span></label>
+      <label data-val="B"><input type="radio" name="expertPickRadio" value="B"><span class="pick-text"><span>英文／韓文</span><span class="pick-sub">English／Korean（評分者 B）</span></span></label>
     </div>
     <label class="q">姓名／代號 <span class="hint">選填，僅供研究團隊辨識，不公開</span></label>
     <input type="text" id="raterName" placeholder="例如：王小明 或 A1" />
@@ -263,7 +266,14 @@ function storageKey(){ return "patent_expert_eval_" + (state.expert||"none") + "
 
 /* ---- 暫存 ---- */
 function save(){ try{ localStorage.setItem(storageKey(), JSON.stringify(state)); $("#saveState").textContent="已於本機自動暫存 ✓"; }catch(e){ $("#saveState").textContent="（暫存無法使用）"; } }
-function loadFor(expert){ try{ const r=localStorage.getItem("patent_expert_eval_"+expert+"_"+SURVEY_META.version); if(r){ const s=JSON.parse(r); Object.assign(state,s); } }catch(e){} }
+/* 還原某評分者先前已填的答案/題序（不覆蓋目前的 screenIdx/consent/expert，
+   否則返填的人重選身分時導覽會被帶回舊頁，造成「按繼續沒反應」） */
+function loadFor(expert){ try{ const r=localStorage.getItem("patent_expert_eval_"+expert+"_"+SURVEY_META.version); if(r){ const s=JSON.parse(r); state.items=s.items||{}; state.order=s.order||null; state.rater=s.rater||state.rater; state.startedAt=s.startedAt||state.startedAt; } }catch(e){} }
+/* 選擇評分者（英文＝A／英文＋韓文＝B）；由 radio 的 change 觸發，touch 裝置可靠 */
+function pickExpert(val){
+  if(state.expert!==val){ state.expert=val; loadFor(val); state.expert=val; }
+  ensureOrder(); paintExpert(); save();
+}
 
 /* ---- 種子隨機題序（mulberry32） ---- */
 function seededOrder(seed,n){
@@ -409,7 +419,7 @@ function render(){
   window.scrollTo(0,0);
   ["#consentErr","#expertErr","#itemErr"].forEach(id=>$(id)&&$(id).classList.add("hidden"));
 }
-function paintExpert(){ $$("#expertPick label").forEach(l=>l.classList.toggle("sel", l.dataset.val===state.expert)); }
+function paintExpert(){ $$("#expertPick label").forEach(l=>{ const on=l.dataset.val===state.expert; l.classList.toggle("sel", on); const r=l.querySelector("input"); if(r) r.checked=on; }); }
 
 /* ---- 匯出／送出 ---- */
 function flatRows(){
@@ -460,11 +470,9 @@ function renderReview(){
   if(!ITEMS.length){ document.querySelector("main").innerHTML='<div class="card"><h2>尚未載入題目</h2><p>找不到 <code>items.js</code> 或其為空。請先在 <code>專家評估/</code> 執行 <code>python export_items.py</code> 產生題目。</p></div>'; return; }
   render();
   $("#consent").addEventListener("change",e=>{ state.consent=e.target.checked; save(); });
-  $$("#expertPick label").forEach(l=>l.addEventListener("click",()=>{
-    const prev=state.expert; state.expert=l.dataset.val;
-    if(prev!==state.expert){ loadFor(state.expert); state.expert=l.dataset.val; ensureOrder(); }
-    paintExpert(); save();
-  }));
+  // 評分者選擇：以原生 radio 的 change 為主（touch 裝置最可靠），label 點擊為輔
+  $$('#expertPick input[type=radio]').forEach(r=>r.addEventListener("change",()=>pickExpert(r.value)));
+  $$('#expertPick label').forEach(l=>l.addEventListener("click",()=>{ const r=l.querySelector("input"); if(r&&!r.checked){ r.checked=true; pickExpert(l.dataset.val); } }));
   window.addEventListener("beforeunload",()=>{ if(SCREENS[state.screenIdx]==="item") stopTimer(); save(); });
 })();
 </script>
