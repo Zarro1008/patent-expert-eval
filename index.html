@@ -549,8 +549,8 @@
 
       <h3>您要評核什麼</h3>
       <p>每筆提供：<strong>原文</strong>、系統<strong>翻譯</strong>、系統<strong>摘要</strong>、系統<strong>實體／關鍵詞</strong>。
-        請<strong>對照原文</strong>評核系統產出，而非自己重寫。題數依您所選的翻譯語言而定（共 <strong id="introCount">4–8</strong>
-        筆）：選「英文」者僅出現英文來源題；選「英文／韓文」者另含韓文來源題。</p>
+        請<strong>對照原文</strong>評核系統產出，而非自己重寫。依您所選的翻譯語言出題（共 <strong id="introCount">4</strong>
+        筆）：選「英文」者評 4 筆英文來源題；選「韓文」者評 4 筆韓文來源題。</p>
 
       <h3>評分規則（務必遵守）</h3>
       <div class="note-box">
@@ -577,7 +577,7 @@
         <label data-val="A"><input type="radio" name="expertPickRadio" value="A"><span
             class="pick-text"><span>英文</span><span class="pick-sub">English（評分者 A）</span></span></label>
         <label data-val="B"><input type="radio" name="expertPickRadio" value="B"><span
-            class="pick-text"><span>英文／韓文</span><span class="pick-sub">English／Korean（評分者 B）</span></span></label>
+            class="pick-text"><span>韓文</span><span class="pick-sub">Korean（評分者 B）</span></span></label>
       </div>
       <label class="q">姓名／代號 <span class="hint">選填，僅供研究團隊辨識，不公開</span></label>
       <input type="text" id="raterName" placeholder="例如：王小明 或 A1" />
@@ -594,7 +594,7 @@
         <option>北美</option>
         <option>其他</option>
       </select>
-      <div class="err hidden" id="expertErr">請先選擇您負責的翻譯語言（英文 或 英文／韓文）。</div>
+      <div class="err hidden" id="expertErr">請先選擇您負責的翻譯語言（英文 或 韓文）。</div>
     </section>
 
     <!-- ===== 單筆評估（動態） ===== -->
@@ -709,7 +709,7 @@
     const SURVEY_META = { title: "多語專利情報系統輸出 — 人工專家 pilot 評估", version: "1.0", n_items: 8 };
     const ITEMS = (window.ITEMS || []);
     const SEED = { A: 101, B: 202 };
-    const EXPERT_LANG = { A: "英文", B: "英文／韓文" };  // 評分者依負責的翻譯語言區分
+    const EXPERT_LANG = { A: "英文", B: "韓文" };  // 評分者依負責的翻譯語言區分（各 4 題）
 
     /* 必填欄位（與 Expert 表欄名一致） */
     const REQUIRED = ["Q1_translation_adequacy", "Q2_summ_faithfulness", "Q3_hallucination",
@@ -739,8 +739,8 @@
       for (let i = n - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1));[idx[i], idx[j]] = [idx[j], idx[i]]; }
       return idx;
     }
-    /* 依評分者語言能力篩題：A=英文 → 僅英文來源題；B=英文／韓文 → 全部 */
-    function canSee(m) { return state.expert === "B" ? true : (m.lang !== "ko"); }
+    /* 依評分者語言篩題：A=英文 → 僅英文來源題（4 題）；B=韓文 → 僅韓文來源題（4 題） */
+    function canSee(m) { return state.expert === "A" ? (m.lang !== "ko") : (m.lang === "ko"); }
     function visibleIdx() { return ITEMS.map((m, i) => i).filter(i => canSee(ITEMS[i])); }
     function ensureOrder() {
       const vis = visibleIdx();
@@ -861,7 +861,7 @@
       const sc = SCREENS[state.screenIdx];
       $$(".screen").forEach(s => s.classList.toggle("hidden", s.dataset.screen !== sc));
       $("#whoTag").textContent = state.expert ? (EXPERT_LANG[state.expert] + "（評分者 " + state.expert + "）") : "";
-      $("#introCount").textContent = state.order ? visCount() : "4–8";
+      $("#introCount").textContent = state.order ? visCount() : "4";
       if (sc === "item") renderItem();
       if (sc === "done") { renderReview(); onDoneScreen(); }
       if (sc === "intro") $("#consent").checked = !!state.consent;
