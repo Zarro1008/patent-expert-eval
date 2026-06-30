@@ -579,8 +579,8 @@
         <label data-val="B"><input type="radio" name="expertPickRadio" value="B"><span
             class="pick-text"><span>韓文</span><span class="pick-sub">Korean（評分者 B）</span></span></label>
       </div>
-      <label class="q">姓名／代號 <span class="hint">選填，僅供研究團隊辨識，不公開</span></label>
-      <input type="text" id="raterName" placeholder="例如：王小明 或 A1" />
+      <label class="q">評分者代號 <span class="req">*</span> <span class="hint">必填且須唯一（請輸入研究團隊給您的代號，例如 E1、E2）。同一語言由多位專家各自評分，以此代號區分。</span></label>
+      <input type="text" id="raterName" placeholder="例如：E1" />
       <label class="q">所在地區 <span class="hint">選填，用於描述跨地區樣本</span></label>
       <select id="raterRegion">
         <option value="">— 請選擇 —</option>
@@ -719,7 +719,7 @@
     let state = { screenIdx: 0, itemIdx: 0, consent: false, expert: null, rater: {}, items: {}, order: null, startedAt: null };
     const $ = s => document.querySelector(s);
     function $$(sel, root) { return Array.from((root || document).querySelectorAll(sel)); }
-    function storageKey() { return "patent_expert_eval_" + (state.expert || "none") + "_" + SURVEY_META.version; }
+    function storageKey() { const n = (state.rater && state.rater.name) ? state.rater.name.trim().replace(/[^\w-]/g, "_") : "none"; return "patent_expert_eval_" + (state.expert || "none") + "_" + n + "_" + SURVEY_META.version; }
 
     /* ---- 暫存 ---- */
     function save() { try { localStorage.setItem(storageKey(), JSON.stringify(state)); $("#saveState").textContent = "已於本機自動暫存 ✓"; } catch (e) { $("#saveState").textContent = "（暫存無法使用）"; } }
@@ -728,7 +728,8 @@
     function loadFor(expert) { try { const r = localStorage.getItem("patent_expert_eval_" + expert + "_" + SURVEY_META.version); if (r) { const s = JSON.parse(r); state.items = s.items || {}; state.order = s.order || null; state.rater = s.rater || state.rater; state.startedAt = s.startedAt || state.startedAt; } } catch (e) { } }
     /* 選擇評分者（英文＝A／英文＋韓文＝B）；由 radio 的 change 觸發，touch 裝置可靠 */
     function pickExpert(val) {
-      if (state.expert !== val) { state.expert = val; loadFor(val); state.expert = val; }
+      // 身分由「評分者代號」區分，不依語言自動還原他人資料（續填由 showResumePrompt 處理）
+      if (state.expert !== val) { state.expert = val; state.order = null; }
       ensureOrder(); paintExpert(); save();
     }
 
@@ -830,7 +831,12 @@
     function validate() {
       const sc = SCREENS[state.screenIdx];
       if (sc === "intro") { if (!$("#consent").checked) { $("#consentErr").classList.remove("hidden"); return false; } state.consent = true; if (!state.startedAt) state.startedAt = new Date().toISOString(); return true; }
-      if (sc === "expert") { if (!state.expert) { $("#expertErr").classList.remove("hidden"); return false; } state.rater = { name: $("#raterName").value, region: $("#raterRegion").value }; return true; }
+      if (sc === "expert") {
+        if (!state.expert) { $("#expertErr").textContent = "請先選擇您負責的翻譯語言（英文 或 韓文）。"; $("#expertErr").classList.remove("hidden"); return false; }
+        const nm = ($("#raterName").value || "").trim();
+        if (!nm) { $("#expertErr").textContent = "請填寫您的評分者代號（必填，例如 E1）。"; $("#expertErr").classList.remove("hidden"); return false; }
+        state.rater = { name: nm, region: $("#raterRegion").value }; save(); return true;
+      }
       if (sc === "item") {
         const d = curItem(), miss = [];
         REQUIRED.forEach(f => { if (d[f] == null || d[f] === "") miss.push(f); });
